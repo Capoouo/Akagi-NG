@@ -41,7 +41,7 @@ function buildBackend() {
       process.exit(result.status || 1);
     }
 
-    console.log('✅ Backend build process completed successfully');
+    console.log('✅ Backend build process completed successfully.');
   } catch (error) {
     console.error('❌ An unexpected error occurred during backend build:', error);
     process.exit(1);

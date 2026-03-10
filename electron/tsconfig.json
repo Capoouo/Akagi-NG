@@ -13,7 +13,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "../dist/main",
-    "rootDir": "."
+    "rootDir": "./src"
   },
-  "include": ["./**/*"]
+  "include": ["./src/**/*"]
 }
