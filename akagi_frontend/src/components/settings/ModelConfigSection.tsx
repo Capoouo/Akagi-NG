@@ -166,7 +166,6 @@ export const ModelConfigSection: FC<ModelConfigSectionProps> = memo(
                 />
               </div>
             </SettingsItem>
-
           </div>
         </div>
       </div>

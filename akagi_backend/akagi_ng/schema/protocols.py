@@ -102,7 +102,6 @@ class EngineProtocol(Protocol):
     enable_amp: bool
     enable_rule_based_agari_guard: bool
 
-
     def reset_status(self):
         """重置引擎状态（如回退标志）。"""
         ...
