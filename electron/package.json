@@ -46,6 +46,8 @@
   },
   "build": {
     "appId": "me.akagi.ng",
+    "compression": "normal",
+    "artifactName": "Akagi-NG-${version}-${os}-${arch}.${ext}",
     "productName": "Akagi-NG",
     "icon": "../assets/torii.ico",
     "electronLanguages": [
@@ -74,7 +76,7 @@
     "extraMetadata": {
       "main": "dist/main/main.js"
     },
-    "extraFiles": [
+    "extraResources": [
       {
         "from": "../dist/backend/akagi-ng",
         "to": "bin",
@@ -102,7 +104,14 @@
     },
     "mac": {
       "target": "zip",
-      "icon": "../assets/torii.icns"
+      "icon": "../assets/torii.icns",
+      "category": "public.app-category.games",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "binaries": [
+        "Contents/Resources/bin/**/*",
+        "Contents/Resources/lib/**/*"
+      ]
     },
     "linux": {
       "target": "tar.gz",

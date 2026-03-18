@@ -9,7 +9,7 @@ import path from 'path';
 export function getProjectRoot(): string {
   return !app.isPackaged
     ? path.resolve(__dirname, '../../')
-    : path.join(process.resourcesPath, '..');
+    : process.resourcesPath;
 }
 
 /**
