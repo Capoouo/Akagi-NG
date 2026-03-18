@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-14, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write

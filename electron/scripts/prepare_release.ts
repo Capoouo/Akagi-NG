@@ -40,7 +40,6 @@ if (fs.existsSync(licenseSource)) {
 // 4. Bundle and rename libriichi for current platform
 import os from 'os';
 const platform = os.platform();
-const arch = os.arch();
 
 const sysStr =
   platform === 'win32'
@@ -49,7 +48,7 @@ const sysStr =
       ? 'apple-darwin'
       : 'unknown-linux-gnu';
 const ext = platform === 'win32' ? 'pyd' : 'so';
-const archStr = arch === 'arm64' ? 'aarch64' : 'x86_64';
+const archStr = platform === 'darwin' ? 'aarch64' : 'x86_64';
 
 ['libriichi', 'libriichi3p'].forEach((prefix) => {
   const pattern = `${prefix}-3.12-${archStr}-${sysStr}.${ext}`;

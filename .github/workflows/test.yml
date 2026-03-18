@@ -43,7 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-14, macos-13]
+        os: [windows-latest, ubuntu-24.04, macos-14]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -83,22 +83,14 @@ jobs:
           if [ "$RUNNER_OS" == "Windows" ]; then
             SYS_STR="pc-windows-msvc"
             EXT="pyd"
-            # Windows runner is x64
             ARCH_STR="x86_64"
           elif [ "$RUNNER_OS" == "macOS" ]; then
             SYS_STR="apple-darwin"
             EXT="so"
-            # macOS runners can be arm64 or x86_64, check arch
-            ARCH=$(uname -m)
-            if [ "$ARCH" == "arm64" ]; then
-              ARCH_STR="aarch64"
-            else
-              ARCH_STR="x86_64"
-            fi
+            ARCH_STR="aarch64"
           else
             SYS_STR="unknown-linux-gnu"
             EXT="so"
-            # Linux runner is x64
             ARCH_STR="x86_64"
           fi
 
