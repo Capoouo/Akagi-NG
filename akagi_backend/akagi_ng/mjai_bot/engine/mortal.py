@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Self
@@ -18,24 +17,7 @@ from akagi_ng.mjai_bot.network import (
 from akagi_ng.mjai_bot.status import BotStatusContext
 from akagi_ng.schema.constants import ModelConstants
 from akagi_ng.schema.notifications import NotificationCode
-
-
-@dataclass
-class MortalModelResource:
-    """
-    持有 Mortal 模型核心资源的容器。
-    这些资源在多个 Bot 实例间共享，以减少内存占用。
-    """
-
-    brain: torch.nn.Module
-    dqn: torch.nn.Module
-    version: int
-    device: torch.device
-    stochastic_latent: bool
-    boltzmann_epsilon: float
-    boltzmann_temp: float
-    top_p: float
-    engine_name: str
+from akagi_ng.schema.types import MortalModelResource
 
 
 class MortalEngine(BaseEngine):

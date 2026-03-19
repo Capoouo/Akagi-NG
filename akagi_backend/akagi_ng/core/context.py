@@ -11,7 +11,7 @@ from akagi_ng.schema.types import AkagiEvent
 from akagi_ng.settings import Settings
 
 
-@dataclass
+@dataclass(slots=True)
 class AppContext:
     """应用上下文，聚合核心组件。"""
 

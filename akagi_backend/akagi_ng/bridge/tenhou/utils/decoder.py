@@ -13,7 +13,7 @@ class MeldType(StrEnum):
     ANKAN = "ankan"
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class Meld:
     target: int
     meld_type: MeldType

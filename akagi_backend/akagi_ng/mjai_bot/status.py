@@ -9,7 +9,7 @@ from akagi_ng.schema.types import (
 )
 
 
-@dataclass
+@dataclass(slots=True)
 class BotStatusContext:
     """
     Bot 状态上下文。

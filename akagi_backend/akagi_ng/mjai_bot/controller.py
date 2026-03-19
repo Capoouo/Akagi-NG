@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-
 from akagi_ng.mjai_bot.logger import logger
 from akagi_ng.mjai_bot.status import BotStatusContext
 from akagi_ng.schema.notifications import NotificationCode
@@ -14,12 +12,12 @@ from akagi_ng.schema.types import (
 )
 
 
-@dataclass
 class Controller:
-    status: BotStatusContext = field(default_factory=BotStatusContext)
-    bot: BotProtocol | None = None
-    pending_start_game_event: StartGameEvent | None = None  # Bot 将在收到第一个 start_game 事件时初始化
-    last_response: MJAIResponse | None = None  # 存储最近一次 Bot 的决策结果
+    def __init__(self, status: BotStatusContext | None = None):
+        self.status: BotStatusContext = status or BotStatusContext()
+        self.bot: BotProtocol | None = None
+        self.pending_start_game_event: StartGameEvent | None = None  # Bot 将在收到第一个 start_game 事件时初始化
+        self.last_response: MJAIResponse | None = None  # 存储最近一次 Bot 的决策结果
 
     def react(self, event: AkagiEvent):
         """

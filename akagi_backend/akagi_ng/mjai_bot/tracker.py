@@ -1,6 +1,3 @@
-from dataclasses import dataclass, field
-from typing import Literal
-
 from akagi_ng.core.lib_loader import libriichi
 from akagi_ng.mjai_bot.logger import logger
 from akagi_ng.mjai_bot.status import BotStatusContext
@@ -9,8 +6,10 @@ from akagi_ng.schema.constants import MahjongConstants
 from akagi_ng.schema.notifications import NotificationCode
 from akagi_ng.schema.protocols import PlayerStateProtocol, StateTrackerProtocol
 from akagi_ng.schema.types import (
+    ChiType,
     DahaiEvent,
     FullRecommendationData,
+    FuuroAction,
     FuuroDetail,
     MJAIEvent,
     MJAIMetadata,
@@ -22,22 +21,19 @@ from akagi_ng.schema.types import (
 )
 from akagi_ng.settings import local_settings
 
-type ChiType = Literal["chi_low", "chi_mid", "chi_high"]
-type FuuroAction = Literal["chi_low", "chi_mid", "chi_high", "pon", "kan_select"]
 
-
-@dataclass
 class StateTracker(StateTrackerProtocol):
     """
     状态追踪器，用于跟踪游戏状态。
     作为 libriichi PlayerState 的封装包装器，向下提供状态查询以供推理、副露推荐以及前端展示等使用。
     """
 
-    status: BotStatusContext
-    is_3p: bool = False
-    meta: MJAIMetadata = field(default_factory=dict)
-    player_id: int = 0
-    player_state: PlayerStateProtocol | None = None
+    def __init__(self, status: BotStatusContext, is_3p: bool = False):
+        self.status: BotStatusContext = status
+        self.is_3p: bool = is_3p
+        self.meta: MJAIMetadata = {}
+        self.player_id: int = 0
+        self.player_state: PlayerStateProtocol | None = None
 
     def react(self, event: MJAIEvent) -> MJAIResponse | None:
         try:

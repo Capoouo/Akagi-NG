@@ -44,7 +44,7 @@ def test_lazy_local_engine_ensure_engine(mock_consts) -> None:
     path = Path("mortal.pth")
     engine = LazyLocalEngine(BotStatusContext(), path, mock_consts, is_3p=False)
 
-    with patch("akagi_ng.mjai_bot.engine.factory.load_mortal_resource") as mock_load:
+    with patch("akagi_ng.mjai_bot.engine.mortal.load_mortal_resource") as mock_load:
         mock_resource = MagicMock()
         mock_load.return_value = mock_resource
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from akagi_ng.bridge.tenhou.utils.decoder import Meld
 
 
-@dataclass
+@dataclass(slots=True)
 class State:
     """Tenhou 桥接状态。"""
 

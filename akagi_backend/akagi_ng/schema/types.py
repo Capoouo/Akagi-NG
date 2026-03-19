@@ -21,6 +21,24 @@ class EngineAdditionalMeta(TypedDict, total=False):
     fallback_used: bool
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MortalModelResource:
+    """
+    持有 Mortal 模型核心资源的容器。
+    这些资源在多个 Bot 实例间共享，以减少内存占用。
+    """
+
+    brain: object
+    dqn: object
+    version: int
+    device: object
+    stochastic_latent: bool
+    boltzmann_epsilon: float
+    boltzmann_temp: float
+    top_p: float
+    engine_name: str
+
+
 # --- 引擎与通知精确类型定义 ---
 # 根据逻辑分类：Flag (持久状态标志) vs Event (瞬时系统事件)
 
@@ -82,6 +100,9 @@ type MJAIActionType = Literal[
     "hora",
     "ryukyoku",
 ]
+
+type ChiType = Literal["chi_low", "chi_mid", "chi_high"]
+type FuuroAction = Literal["chi_low", "chi_mid", "chi_high", "pon", "kan_select"]
 
 
 class MJAIMetadata(TypedDict, total=False):

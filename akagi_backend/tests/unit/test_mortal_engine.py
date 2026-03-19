@@ -9,6 +9,7 @@
 - 推理过程中的异常捕获与 RuntimeError 抛出。
 """
 
+import dataclasses
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -114,8 +115,7 @@ def test_mortal_engine_inference_error(mock_mortal_resource) -> None:
 
 
 def test_mortal_engine_stochastic_boltzmann(mock_mortal_resource) -> None:
-    # 设置 boltzmann
-    mock_mortal_resource.boltzmann_epsilon = 1.0
+    mock_mortal_resource = dataclasses.replace(mock_mortal_resource, boltzmann_epsilon=1.0)
     engine = MortalEngine(BotStatusContext(), mock_mortal_resource, is_3p=False)
 
     obs = np.zeros((1, 200, 34))
