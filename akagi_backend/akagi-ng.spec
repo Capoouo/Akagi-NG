@@ -70,9 +70,7 @@ if sys.platform == "win32":
 
 block_cipher = None
 
-hiddenimports = (
-    collect_submodules("numpy")
-)
+hiddenimports = collect_submodules("numpy")
 
 a = Analysis(
     ['akagi_ng/__main__.py'],
@@ -82,12 +80,20 @@ a = Analysis(
     hiddenimports=hiddenimports,
     excludes=[
         "pytest", "pytest-asyncio", "pytest-cov", "ruff", "pyinstaller",
-        "setuptools", "pip", "pkg_resources", "jedi", "parso", "mypy",
-        "black", "isort", "flake8", "pylint", "wheel", "build", "twine",
-        "tkinter", "unittest", "IPython", "lib2to3", "pydoc", "pdb",
+        "pip", "jedi", "parso", "mypy",
+        "black", "isort", "flake8", "pylint", "build", "twine",
+        "tkinter", "IPython", "numpy.testing", "numpy.f2py", "numpy.distutils",
     ],
     noarchive=False,
 )
+
+# Hook to strip any NVIDIA/CUDA binaries from being packaged if the local developer has a bloated PyTorch installation
+def clean_cuda_bloat(binaries):
+    cuda_keywords = ["torch_cuda", "cudnn", "cublas", "nvrtc", "cufft", "curand", "cusolver", "cusparse", "nvjpeg", "nvptx"]
+    return [b for b in binaries if not any(k in b[0].lower() for k in cuda_keywords)]
+
+a.binaries = clean_cuda_bloat(a.binaries)
+
 
 pyz = PYZ(a.pure, a.zipped_data, optimize=2)
 
@@ -100,12 +106,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
-    upx_exclude=[
-        "torch_cpu.dll", "torch_cuda.dll", "torch_cuda_cpp.dll", "torch_cuda_cu.dll",
-        "nvrtc64_*.dll", "cudnn64_*.dll", "cublas64_*.dll",
-        "libiomp5md.dll", "libuv.dll", "mkl_rt.2.dll", "mkl_intel_thread.2.dll"
-    ],
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -121,7 +122,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='akagi-ng',
 )

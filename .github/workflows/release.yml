@@ -12,6 +12,7 @@ concurrency:
 env:
   PYTHONUTF8: 1
   AKAGI_MOCK_MODE: 0
+  PIP_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
 
 jobs:
   pre-release-test:
