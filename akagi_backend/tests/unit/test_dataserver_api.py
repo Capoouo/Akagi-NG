@@ -9,6 +9,7 @@
 - 修改配置时触发的资源缓存清理逻辑。
 """
 
+import importlib
 import queue
 import sys
 from types import ModuleType
@@ -20,20 +21,39 @@ from aiohttp.test_utils import TestClient, TestServer
 
 # 這裡先注入假的 mjai_bot.engine，避免單元測試在 import API 時依賴原生 libriichi。
 mock_engine = ModuleType("akagi_ng.mjai_bot.engine")
-mock_engine.clear_resource_cache = MagicMock()
-mock_package = ModuleType("akagi_ng.mjai_bot")
-mock_package.engine = mock_engine
-sys.modules.setdefault("akagi_ng.mjai_bot", mock_package)
-sys.modules["akagi_ng.mjai_bot.engine"] = mock_engine
-
-from akagi_ng.dataserver.api import _is_allowed_origin, cors_middleware, setup_routes
 from akagi_ng.schema.types import SystemShutdownEvent, WebSocketClosedMessage
+
+type DataserverApiModule = ModuleType
+
+
+def load_dataserver_api_module() -> DataserverApiModule:
+    if "akagi_ng.dataserver.api" in sys.modules:
+        return sys.modules["akagi_ng.dataserver.api"]
+
+    mock_engine = ModuleType("akagi_ng.mjai_bot.engine")
+    mock_engine.clear_resource_cache = MagicMock()
+    mock_package = ModuleType("akagi_ng.mjai_bot")
+    mock_package.engine = mock_engine
+
+    with patch.dict(
+        sys.modules,
+        {
+            "akagi_ng.mjai_bot": mock_package,
+            "akagi_ng.mjai_bot.engine": mock_engine,
+        },
+    ):
+        return importlib.import_module("akagi_ng.dataserver.api")
+
+
+def get_dataserver_api_module() -> DataserverApiModule:
+    return load_dataserver_api_module()
 
 
 @pytest.fixture
 async def cli():
-    app = web.Application(middlewares=[cors_middleware])
-    setup_routes(app)
+    api_module = get_dataserver_api_module()
+    app = web.Application(middlewares=[api_module.cors_middleware])
+    api_module.setup_routes(app)
     server = TestServer(app)
     client = TestClient(server)
     await client.start_server()
@@ -42,11 +62,12 @@ async def cli():
 
 
 def test_is_allowed_origin():
-    assert _is_allowed_origin(None) is True
-    assert _is_allowed_origin("http://localhost:3000") is True
-    assert _is_allowed_origin("http://127.0.0.1:8080") is True
-    assert _is_allowed_origin("https://game.maj-soul.com") is True
-    assert _is_allowed_origin("http://malicious.com") is False
+    api_module = get_dataserver_api_module()
+    assert api_module._is_allowed_origin(None) is True
+    assert api_module._is_allowed_origin("http://localhost:3000") is True
+    assert api_module._is_allowed_origin("http://127.0.0.1:8080") is True
+    assert api_module._is_allowed_origin("https://game.maj-soul.com") is True
+    assert api_module._is_allowed_origin("http://malicious.com") is False
 
 
 async def test_cors_middleware_allowed(cli):
