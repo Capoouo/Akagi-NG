@@ -2,7 +2,15 @@ from unittest.mock import MagicMock, patch
 
 from akagi_ng.bridge.majsoul.liqi import MsgType, from_protobuf, to_protobuf
 from akagi_ng.bridge.majsoul.mod_proto import config_pb2, sheets_pb2
-from akagi_ng.bridge.majsoul.modifier import MajsoulModifier, ModCatalog
+from akagi_ng.bridge.majsoul.modifier import (
+    DEFAULT_CHARACTER_ID,
+    MajsoulModifier,
+    ModCatalog,
+    get_default_mod_settings_dict,
+    value_to_dict,
+    value_to_list,
+    verify_mod_settings_dict,
+)
 
 
 def make_modifier() -> MajsoulModifier:
@@ -1073,3 +1081,224 @@ def test_modifier_patches_misc_response_branches():
     )
     assert mutation.content == b"patched"
     assert modifier.safe["account_id"] == 12345
+
+
+def test_modifier_helper_functions_and_validation():
+    defaults = get_default_mod_settings_dict()
+    assert defaults["config"]["character"] == DEFAULT_CHARACTER_ID
+    assert value_to_dict({"a": 1}) == {"a": 1}
+    assert value_to_dict([]) is None
+    assert value_to_list([1, 2]) == [1, 2]
+    assert value_to_list({}) is None
+    assert verify_mod_settings_dict({"enabled": True, "config": {}, "resource": {}}) is True
+    assert verify_mod_settings_dict({"enabled": "yes"}) is False
+    assert verify_mod_settings_dict({"config": []}) is False
+    assert verify_mod_settings_dict({"resource": []}) is False
+
+
+def test_modifier_process_guard_paths():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+
+    modifier.settings["enabled"] = False
+    assert modifier.process({}, from_client=True, raw_content=b"x", liqi_proto=liqi_proto).content is None
+
+    modifier.settings["enabled"] = True
+    assert modifier.process({}, from_client=True, raw_content=b"x", liqi_proto=liqi_proto).content is None
+    invalid = modifier.process(
+        {"type": MsgType.Req, "method": 1, "data": {}},
+        from_client=True,
+        raw_content=b"x",
+        liqi_proto=liqi_proto,
+    )
+    assert invalid.content is None
+
+
+def test_modifier_refresh_catalog_local_download_and_failure():
+    modifier = make_modifier()
+    modifier.catalog_loaded = False
+    fake_path = MagicMock()
+
+    with (
+        patch("akagi_ng.bridge.majsoul.modifier.RESOURCE_PATH", fake_path),
+        patch.object(modifier, "_load_catalog", return_value=ModCatalog(characters=[200001])),
+        patch.object(modifier, "_save_settings"),
+    ):
+        fake_path.exists.return_value = True
+        fake_path.read_bytes.return_value = b"abc"
+        modifier._refresh_catalog()
+        assert modifier.catalog.characters == [200001]
+
+    with (
+        patch("akagi_ng.bridge.majsoul.modifier.RESOURCE_PATH", fake_path),
+        patch.object(modifier, "_update_resource"),
+        patch("akagi_ng.bridge.majsoul.modifier.RESOURCE_PATH.read_bytes", return_value=b"abc"),
+        patch.object(modifier, "_load_catalog", return_value=ModCatalog(characters=[200002])),
+        patch.object(modifier, "_save_settings"),
+    ):
+        fake_path.exists.side_effect = [False, True]
+        modifier._refresh_catalog()
+        assert modifier.catalog.characters == [200002]
+
+    with (
+        patch("akagi_ng.bridge.majsoul.modifier.RESOURCE_PATH", fake_path),
+        patch.object(modifier, "_save_settings"),
+    ):
+        fake_path.exists.side_effect = RuntimeError("boom")
+        modifier._refresh_catalog()
+
+
+def test_modifier_load_catalog_extracts_supported_entries():
+    modifier = make_modifier()
+
+    character_sheet = config_pb2.SheetData(table="item_definition", sheet="character")
+    character_sheet.data.append(sheets_pb2.ItemDefinitionCharacter(id=200001).SerializeToString())
+    skin_sheet = config_pb2.SheetData(table="item_definition", sheet="skin")
+    skin_sheet.data.append(sheets_pb2.ItemDefinitionSkin(id=400101).SerializeToString())
+    title_sheet = config_pb2.SheetData(table="item_definition", sheet="title")
+    title_sheet.data.append(sheets_pb2.ItemDefinitionTitle(id=600001).SerializeToString())
+    item_sheet = config_pb2.SheetData(table="item_definition", sheet="item")
+    item_sheet.data.append(sheets_pb2.ItemDefinitionItem(id=305001, category=5).SerializeToString())
+    item_sheet.data.append(sheets_pb2.ItemDefinitionItem(id=308001, category=8).SerializeToString())
+    view_sheet = config_pb2.SheetData(table="item_definition", sheet="view")
+    view_sheet.data.append(sheets_pb2.ItemDefinitionView(id=307001).SerializeToString())
+    loading_sheet = config_pb2.SheetData(table="item_definition", sheet="loading_image")
+    loading_sheet.data.append(sheets_pb2.ItemDefinitionLoadingImage(id=308002).SerializeToString())
+    emoji_sheet = config_pb2.SheetData(table="character", sheet="emoji")
+    emoji_sheet.data.append(sheets_pb2.CharacterEmoji(charid=200001, sub_id=9).SerializeToString())
+    reward_sheet = config_pb2.SheetData(table="spot", sheet="rewards")
+    reward_sheet.data.append(sheets_pb2.SpotRewards(id=900001).SerializeToString())
+
+    tables = config_pb2.ConfigTables()
+    tables.datas.extend(
+        [
+            character_sheet,
+            skin_sheet,
+            title_sheet,
+            item_sheet,
+            view_sheet,
+            loading_sheet,
+            emoji_sheet,
+            reward_sheet,
+        ]
+    )
+
+    catalog = modifier._load_catalog(tables.SerializeToString())
+    assert catalog.characters == [200001]
+    assert catalog.skins == [400101]
+    assert catalog.titles == [600001]
+    assert 305001 in catalog.items
+    assert 307001 in catalog.views
+    assert 308001 in catalog.loading_images
+    assert 308002 in catalog.loading_images
+    assert catalog.emoji[200001] == [9]
+    assert catalog.endings == [900001]
+
+
+def test_modifier_build_room_player_update_notify_none_and_safe_mode_robot():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+
+    assert modifier._build_room_player_update_notify(liqi_proto) is None
+
+    modifier.safe["account_id"] = 12345
+    modifier.settings["config"]["safe_mode"] = True
+    modifier.safe["room_state"] = {
+        "owner_id": 12345,
+        "robot_count": 1,
+        "persons": [{"account_id": 12345, "avatar_id": 400101, "character": {"charid": 200001, "skin": 400101}}],
+        "robots": [{"account_id": 999001, "character": {"charid": 200002, "skin": 400201}}],
+        "positions": [],
+        "seq": 3,
+    }
+    liqi_proto.build_packet.return_value = b"room"
+
+    payload = modifier._build_room_player_update_notify(liqi_proto)
+    assert payload == b"room"
+    built_data = liqi_proto.build_packet.call_args.args[2]
+    assert built_data["seq"] == 4
+    assert built_data["robots"][0]["character"]["charid"] == DEFAULT_CHARACTER_ID
+
+
+def test_modifier_payload_and_view_helpers():
+    modifier = make_modifier()
+    modifier.settings["config"]["characters"] = {}
+    modifier._ensure_character_skin_mapping([200003])
+    assert modifier.settings["config"]["characters"]["200003"] == modifier._default_skin_id(200003)
+
+    assert modifier._current_avatar_frame([{"slot": 1, "item_id": 1}]) is None
+    modifier.settings["config"]["views"]["0"] = [
+        {"slot": 5, "itemId": 30550014, "type": 0},
+        {"slot": 8, "itemIdList": [30700001, 30700002], "type": 1},
+    ]
+    with patch("random.choice", return_value=30700002):
+        resolved = modifier._resolved_views()
+    assert resolved[0] == {"slot": 5, "item_id": 30550014}
+    assert resolved[1] == {"slot": 8, "item_id": 30700002, "type": 1}
+    assert modifier._current_avatar_frame(resolved) == 30550014
+
+    modifier.settings["config"]["random_character"] = {
+        "enabled": True,
+        "pool": [{"character_id": 200002, "skin_id": 400201}],
+    }
+    with patch("random.choice", return_value={"character_id": 200002, "skin_id": 400201}):
+        assert modifier._choose_character(allow_random=True) == (200002, 400201)
+
+    character_payload = modifier._to_character_payload(
+        {
+            "charid": "200001",
+            "skin": "400101",
+            "exp": 0,
+            "level": 5,
+            "isUpgraded": True,
+            "rewardedLevel": [1, "2"],
+            "extraEmoji": [1, "2"],
+            "views": [{"slot": 5, "itemId": 30550014, "type": "0"}],
+        }
+    )
+    assert character_payload is not None
+    assert character_payload["charid"] == 200001
+    assert character_payload["extra_emoji"] == [1, 2]
+    assert modifier._to_character_payload({"charid": None, "skin": 1}) is None
+
+    player_payload = modifier._to_player_payload(
+        {
+            "accountId": "12345",
+            "avatarId": "400101",
+            "avatarFrame": "30550014",
+            "nickname": "Tester",
+            "title": "600001",
+            "verified": "1",
+            "character": {"charid": 200001, "skin": 400101},
+            "views": [{"slot": 5, "itemId": 30550014}],
+        }
+    )
+    assert player_payload is not None
+    assert player_payload["account_id"] == 12345
+    assert player_payload["avatar_frame"] == 30550014
+    assert modifier._to_player_payload({"accountId": None}) is None
+
+    assert modifier._extract_resolved_views([{"slot": "5", "itemId": "30550014", "type": "1"}]) == [
+        {"slot": 5, "item_id": 30550014, "type": 1}
+    ]
+    assert modifier._extract_resolved_views([{"slot": None, "itemId": 1}]) == []
+
+
+def test_modifier_prefix_login_account_and_zone_prefixes():
+    modifier = make_modifier()
+    modifier.settings["config"]["nickname"] = ""
+    modifier.settings["config"]["title"] = 600001
+    modifier.settings["config"]["verified"] = 1
+    modifier.settings["config"]["loading_image"] = [308001]
+    account = {"avatarFrame": 0}
+    modifier.settings["config"]["views"]["0"] = [{"slot": 5, "itemId": 30550014, "type": 0}]
+    modifier._patch_login_account(account)
+    assert account["avatar_id"] == modifier._get_character_skin(modifier.settings["config"]["character"])
+    assert account["avatarFrame"] == 30550014
+    assert account["loading_image"] == [308001]
+
+    player = {"account_id": 9 << 23, "nickname": "Tester"}
+    modifier._prefix_server(player)
+    assert player["nickname"].startswith("[JP]")
+    assert modifier._get_zone_prefix(14 << 23) == "[EN]"
+    assert modifier._get_zone_prefix(20 << 23) == "[??]"
