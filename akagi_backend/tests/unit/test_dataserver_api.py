@@ -10,11 +10,21 @@
 """
 
 import queue
+import sys
+from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
+
+# 這裡先注入假的 mjai_bot.engine，避免單元測試在 import API 時依賴原生 libriichi。
+mock_engine = ModuleType("akagi_ng.mjai_bot.engine")
+mock_engine.clear_resource_cache = MagicMock()
+mock_package = ModuleType("akagi_ng.mjai_bot")
+mock_package.engine = mock_engine
+sys.modules.setdefault("akagi_ng.mjai_bot", mock_package)
+sys.modules["akagi_ng.mjai_bot.engine"] = mock_engine
 
 from akagi_ng.dataserver.api import _is_allowed_origin, cors_middleware, setup_routes
 from akagi_ng.schema.types import SystemShutdownEvent, WebSocketClosedMessage
@@ -50,6 +60,13 @@ async def test_cors_middleware_forbidden(cli):
     assert resp.status == 403
 
 
+async def test_cors_middleware_options_allowed(cli):
+    resp = await cli.options("/api/settings", headers={"Origin": "http://localhost:3000"})
+    assert resp.status == 204
+    assert resp.headers["Access-Control-Allow-Origin"] == "http://localhost:3000"
+    assert resp.headers["Access-Control-Allow-Methods"] == "GET,POST,OPTIONS"
+
+
 async def test_get_settings(cli):
     with patch("akagi_ng.dataserver.api.get_settings_dict", return_value={"test": "val"}):
         resp = await cli.get("/api/settings")
@@ -59,12 +76,33 @@ async def test_get_settings(cli):
         assert data["data"] == {"test": "val"}
 
 
+async def test_get_models(cli):
+    mock_file = MagicMock()
+    mock_file.name = "model_a.pth"
+    mock_file.is_file.return_value = True
+
+    with patch("akagi_ng.dataserver.api.get_models_dir") as mock_models_dir:
+        mock_models_dir.return_value.exists.return_value = True
+        mock_models_dir.return_value.glob.return_value = [mock_file]
+        resp = await cli.get("/api/models")
+        assert resp.status == 200
+        data = await resp.json()
+        assert data["data"] == ["model_a.pth"]
+
+
 async def test_get_majsoul_mod_settings(cli):
     with patch("akagi_ng.dataserver.api.load_mod_settings_dict", return_value={"enabled": True}):
         resp = await cli.get("/api/majsoul-mod-settings")
         assert resp.status == 200
         data = await resp.json()
         assert data["data"] == {"enabled": True}
+
+
+async def test_save_majsoul_mod_settings_invalid_json(cli):
+    resp = await cli.post("/api/majsoul-mod-settings", data="not json")
+    assert resp.status == 400
+    data = await resp.json()
+    assert data["ok"] is False
 
 
 async def test_save_majsoul_mod_settings(cli):
@@ -78,6 +116,18 @@ async def test_save_majsoul_mod_settings(cli):
         mock_save.assert_called_once()
 
 
+async def test_save_majsoul_mod_settings_internal_error(cli):
+    with (
+        patch("akagi_ng.dataserver.api.verify_mod_settings_dict", return_value=True),
+        patch("akagi_ng.dataserver.api.load_mod_settings_dict", return_value={"enabled": False}),
+        patch("akagi_ng.dataserver.api.save_mod_settings_dict", side_effect=RuntimeError("boom")),
+    ):
+        resp = await cli.post("/api/majsoul-mod-settings", json={"enabled": True})
+        assert resp.status == 500
+        data = await resp.json()
+        assert data["ok"] is False
+
+
 async def test_reset_majsoul_mod_settings(cli):
     with (
         patch("akagi_ng.dataserver.api.get_default_mod_settings_dict", return_value={"enabled": True}),
@@ -86,6 +136,17 @@ async def test_reset_majsoul_mod_settings(cli):
         resp = await cli.post("/api/majsoul-mod-settings/reset")
         assert resp.status == 200
         mock_save.assert_called_once_with({"enabled": True})
+
+
+async def test_reset_majsoul_mod_settings_internal_error(cli):
+    with (
+        patch("akagi_ng.dataserver.api.get_default_mod_settings_dict", return_value={"enabled": True}),
+        patch("akagi_ng.dataserver.api.save_mod_settings_dict", side_effect=RuntimeError("boom")),
+    ):
+        resp = await cli.post("/api/majsoul-mod-settings/reset")
+        assert resp.status == 500
+        data = await resp.json()
+        assert data["ok"] is False
 
 
 async def test_save_settings_invalid_json(cli):
@@ -151,6 +212,20 @@ async def test_ingest_mjai_returns_mutation(cli):
         assert data["mutation"]["data"] == "abc"
 
 
+async def test_ingest_mjai_invalid_json(cli):
+    resp = await cli.post("/api/ingest", data="not json")
+    assert resp.status == 400
+    data = await resp.json()
+    assert data["ok"] is False
+
+
+async def test_ingest_mjai_invalid_payload(cli):
+    resp = await cli.post("/api/ingest", json={"type": "unknown_type"})
+    assert resp.status == 400
+    data = await resp.json()
+    assert data["ok"] is False
+
+
 async def test_ingest_mjai_no_client(cli):
     mock_app = MagicMock()
     mock_app.electron_client = None
@@ -158,6 +233,18 @@ async def test_ingest_mjai_no_client(cli):
     with patch("akagi_ng.dataserver.api.get_app_context", return_value=mock_app):
         resp = await cli.post("/api/ingest", json={"type": "websocket_closed"})
         assert resp.status == 503
+
+
+async def test_ingest_mjai_internal_error(cli):
+    mock_app = MagicMock()
+    mock_app.electron_client = MagicMock()
+    mock_app.electron_client.push_message.side_effect = RuntimeError("boom")
+
+    with patch("akagi_ng.dataserver.api.get_app_context", return_value=mock_app):
+        resp = await cli.post("/api/ingest", json={"type": "websocket_closed"})
+        assert resp.status == 500
+        data = await resp.json()
+        assert data["ok"] is False
 
 
 async def test_shutdown_no_message_queue(cli):
@@ -250,3 +337,11 @@ async def test_shutdown_queue_full(cli):
         data = await resp.json()
         assert data["ok"] is False
         assert data["error"] == "Message queue is full"
+
+
+async def test_shutdown_internal_error(cli):
+    with patch("akagi_ng.dataserver.api.get_app_context", side_effect=RuntimeError("boom")):
+        resp = await cli.post("/api/shutdown")
+        assert resp.status == 500
+        data = await resp.json()
+        assert data["ok"] is False

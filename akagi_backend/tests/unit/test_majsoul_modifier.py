@@ -286,6 +286,94 @@ def test_modifier_rebuilds_account_character_update_notify():
     assert patched_data["update"]["main_character"]["skin_id"] == 400201
 
 
+def test_modifier_patches_room_player_update_notify_with_safe_mode():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.safe["account_id"] = 12345
+    modifier.settings["config"]["character"] = 200002
+    modifier.settings["config"]["characters"]["200002"] = 400201
+    modifier.settings["config"]["safe_mode"] = True
+
+    mutation = modifier.process(
+        {
+            "id": -1,
+            "type": MsgType.Notify,
+            "method": ".lq.NotifyRoomPlayerUpdate",
+            "data": {
+                "owner_id": 12345,
+                "robot_count": 1,
+                "player_list": [
+                    {
+                        "account_id": 12345,
+                        "avatar_id": 400101,
+                        "character": {"charid": 200001, "skin": 400101},
+                    }
+                ],
+                "robots": [{"account_id": 999001, "character": {"charid": 200002, "skin": 400201}}],
+                "positions": [],
+                "seq": 5,
+            },
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data["player_list"][0]["character"]["charid"] == 200002
+    assert patched_data["robots"][0]["character"]["charid"] == 200001
+    assert modifier.safe["room_state"]["seq"] == 5
+
+
+def test_modifier_patches_game_finish_reward_notify():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+
+    mutation = modifier.process(
+        {
+            "id": -1,
+            "type": MsgType.Notify,
+            "method": ".lq.NotifyGameFinishRewardV2",
+            "data": {"main_character": {"add": 5, "exp": 100, "level": 2}},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data["main_character"]["add"] == 0
+    assert patched_data["main_character"]["exp"] == 0
+    assert patched_data["main_character"]["level"] == 5
+
+
+def test_modifier_patches_custom_contest_notify_with_server_prefix():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.settings["config"]["show_server"] = True
+
+    mutation = modifier.process(
+        {
+            "id": -1,
+            "type": MsgType.Notify,
+            "method": ".lq.NotifyCustomContestSystemMsg",
+            "data": {"game_start": {"players": [{"account_id": 1, "nickname": "Tester"}]}},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data["game_start"]["players"][0]["nickname"].startswith("[CN]")
+
+
 def test_modifier_patches_fetch_account_info_extra_response():
     modifier = make_modifier()
     liqi_proto = MagicMock()
@@ -498,6 +586,57 @@ def test_modifier_patches_join_room_player():
     assert player["character"]["skin"] == 400201
 
 
+def test_modifier_patches_fetch_room_and_caches_room_state():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.safe["account_id"] = 12345
+    modifier.settings["config"]["character"] = 200002
+    modifier.settings["config"]["characters"]["200002"] = 400201
+    modifier.settings["config"]["show_server"] = True
+    modifier.settings["config"]["safe_mode"] = True
+
+    mutation = modifier.process(
+        {
+            "id": 20,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchRoom",
+            "data": {
+                "room": {
+                    "owner_id": 12345,
+                    "robot_count": 1,
+                    "persons": [
+                        {
+                            "account_id": 12345,
+                            "avatar_id": 400101,
+                            "nickname": "Tester",
+                            "character": {"charid": 200001, "skin": 400101},
+                        }
+                    ],
+                    "robots": [{"account_id": 999001, "character": {"charid": 200002, "skin": 400201}}],
+                    "positions": [0, 1, 2, 3],
+                    "seq": 33,
+                }
+            },
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    player = patched_data["room"]["persons"][0]
+    robot = patched_data["room"]["robots"][0]
+    assert player["avatar_id"] == 400201
+    assert player["character"]["charid"] == 200002
+    assert player["nickname"].startswith("[CN]")
+    assert robot["character"]["charid"] == 200001
+    assert robot["character"]["skin"] == 400101
+    assert modifier.safe["room_state"]["seq"] == 33
+    assert modifier.safe["room_state"]["persons"][0]["account_id"] == 12345
+
+
 def test_modifier_patches_enter_game_snapshot_account_views():
     modifier = make_modifier()
     liqi_proto = MagicMock()
@@ -543,3 +682,359 @@ def test_modifier_patches_enter_game_snapshot_account_views():
     assert player["character"]["skin"] == 400201
     assert player["views"] == [{"slot": 5, "item_id": 30550014}]
     assert player["character"]["views"] == [{"slot": 5, "item_id": 30550014}]
+
+
+def test_modifier_patches_sync_game_snapshot_account_views():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.safe["account_id"] = 12345
+    modifier.settings["config"]["character"] = 200002
+    modifier.settings["config"]["characters"]["200002"] = 400201
+    modifier.settings["config"]["views"]["0"] = [
+        {"slot": 5, "itemId": 30550014, "type": 0, "itemIdList": []},
+    ]
+
+    mutation = modifier.process(
+        {
+            "id": 21,
+            "type": MsgType.Res,
+            "method": ".lq.FastTest.syncGame",
+            "data": {
+                "game_restore": {
+                    "snapshot": {
+                        "account_views": [
+                            {
+                                "account_id": 12345,
+                                "avatar_id": 400101,
+                                "character": {"charid": 200001, "skin": 400101},
+                            }
+                        ],
+                        "robot_views": [],
+                    }
+                }
+            },
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    player = patched_data["game_restore"]["snapshot"]["account_views"][0]
+    assert player["avatar_id"] == 400201
+    assert player["avatar_frame"] == 30550014
+    assert player["character"]["charid"] == 200002
+    assert player["views"] == [{"slot": 5, "item_id": 30550014}]
+
+
+def test_modifier_patches_fetch_title_list_response():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+
+    mutation = modifier.process(
+        {
+            "id": 22,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchTitleList",
+            "data": {"title_list": [1, 2, 3]},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data["title_list"] == [600001]
+
+
+def test_modifier_injects_fetch_announcement_once():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+
+    mutation = modifier.process(
+        {
+            "id": 23,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchAnnouncement",
+            "data": {"announcements": [{"id": 1, "title": "hello"}]},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    announcements = patched_data["announcements"]
+    assert announcements[0]["id"] == 666666
+    assert announcements[0]["title"] == "Majsoul Mod Loaded"
+
+    mutation = modifier.process(
+        {
+            "id": 24,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchAnnouncement",
+            "data": {"announcements": announcements},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    ids = [item["id"] for item in patched_data["announcements"]]
+    assert ids.count(666666) == 1
+
+
+def test_modifier_patches_fetch_random_character_response():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.settings["config"]["random_character"] = {
+        "enabled": True,
+        "pool": [{"character_id": 200002, "skin_id": 400201}],
+    }
+
+    mutation = modifier.process(
+        {
+            "id": 25,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchRandomCharacter",
+            "data": {"enabled": False, "pool": []},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data == {
+        "enabled": True,
+        "pool": [{"character_id": 200002, "skin_id": 400201}],
+    }
+
+
+def test_modifier_fakes_misc_requests_and_updates_config():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"loginbeat"
+
+    mutation = modifier.process(
+        {
+            "id": 26,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.updateCharacterSort",
+            "data": {"sort": [200002, 200001]},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+    assert modifier.settings["config"]["star_chars"] == [200002, 200001]
+
+    mutation = modifier.process(
+        {
+            "id": 27,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.useTitle",
+            "data": {"title": 600001},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+    assert modifier.settings["config"]["title"] == 600001
+
+    mutation = modifier.process(
+        {
+            "id": 28,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.setLoadingImage",
+            "data": {"images": [308001]},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+    assert modifier.settings["config"]["loading_image"] == [308001]
+
+    mutation = modifier.process(
+        {
+            "id": 29,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.setRandomCharacter",
+            "data": {"enabled": True, "pool": [{"character_id": 200002, "skin_id": 400201}]},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+    assert modifier.settings["config"]["random_character"]["enabled"] is True
+
+
+def test_modifier_handles_drop_and_contract_related_requests():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"loginbeat"
+
+    mutation = modifier.process(
+        {
+            "id": 30,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.addFinishedEnding",
+            "data": {},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.drop is True
+    liqi_proto.drop_pending_response.assert_called_once_with(30)
+
+    mutation = modifier.process(
+        {
+            "id": 31,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.readAnnouncement",
+            "data": {"announcement_id": 666666},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+
+    mutation = modifier.process(
+        {
+            "id": 32,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.receiveCharacterRewards",
+            "data": {},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"loginbeat"
+
+    mutation = modifier.process(
+        {
+            "id": 33,
+            "type": MsgType.Req,
+            "method": ".lq.Lobby.loginBeat",
+            "data": {"contract": "abc123"},
+        },
+        from_client=True,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content is None
+    assert modifier.safe["contract"] == "abc123"
+
+
+def test_modifier_patches_misc_response_branches():
+    modifier = make_modifier()
+    liqi_proto = MagicMock()
+    liqi_proto.build_packet.return_value = b"patched"
+    modifier.safe["account_id"] = 12345
+    modifier.settings["config"]["anti_replace_nickname"] = True
+    modifier.settings["config"]["views"]["0"] = [{"slot": 5, "itemId": 30550014, "type": 0, "itemIdList": []}]
+    modifier.settings["config"]["random_character"] = {
+        "enabled": True,
+        "pool": [{"character_id": 200002, "skin_id": 400201}],
+    }
+
+    mutation = modifier.process(
+        {
+            "id": 34,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchAllCommonViews",
+            "data": {"use": 0, "views": []},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"patched"
+    assert liqi_proto.build_packet.call_args.args[2]["views"][0]["index"] == 0
+
+    mutation = modifier.process(
+        {
+            "id": 35,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchServerSettings",
+            "data": {"settings": {"nickname_setting": {"enable": 1, "nicknames": ["x"]}}},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"patched"
+    patched_data = liqi_proto.build_packet.call_args.args[2]
+    assert patched_data["settings"]["nickname_setting"]["enable"] == 0
+    assert patched_data["settings"]["nickname_setting"]["nicknames"] == []
+
+    mutation = modifier.process(
+        {
+            "id": 36,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchGameRecord",
+            "data": {
+                "head": {
+                    "accounts": [
+                        {
+                            "account_id": 12345,
+                            "avatar_id": 400101,
+                            "character": {"charid": 200001, "skin": 400101},
+                        }
+                    ]
+                }
+            },
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"patched"
+    account = liqi_proto.build_packet.call_args.args[2]["head"]["accounts"][0]
+    assert account["avatar_id"] == 400201
+    assert account["character"]["views"] == [{"slot": 5, "item_id": 30550014}]
+
+    mutation = modifier.process(
+        {
+            "id": 37,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.fetchAccountInfo",
+            "data": {"account": {"account_id": 12345, "avatar_id": 400101, "title": 0}},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"patched"
+    assert liqi_proto.build_packet.call_args.args[2]["account"]["title"] == modifier.settings["config"]["title"]
+
+    mutation = modifier.process(
+        {
+            "id": 38,
+            "type": MsgType.Res,
+            "method": ".lq.Lobby.login",
+            "data": {"account_id": 12345, "account": {"nickname": "Tester", "title": 0, "avatar_id": 400101}},
+        },
+        from_client=False,
+        raw_content=b"orig",
+        liqi_proto=liqi_proto,
+    )
+    assert mutation.content == b"patched"
+    assert modifier.safe["account_id"] == 12345
