@@ -1,5 +1,31 @@
-import type { Protocol } from 'devtools-protocol';
 import type { WebContents } from 'electron';
+
+export interface WebSocketCreatedEvent {
+  requestId: string;
+  url: string;
+}
+export interface WebSocketClosedEvent {
+  requestId: string;
+}
+export interface WebSocketFrameReceivedEvent {
+  requestId: string;
+  response?: {
+    payloadData?: string;
+    opcode?: number;
+  };
+}
+export interface WebSocketFrameSentEvent {
+  requestId: string;
+  response?: {
+    payloadData?: string;
+    opcode?: number;
+  };
+}
+export interface ResponseReceivedEvent {
+  response: {
+    url: string;
+  };
+}
 
 export type BackendIngestPayload =
   | {
@@ -132,7 +158,7 @@ export class GameHandler {
 
   private async handleDebuggerMessage(_event: unknown, method: string, params: unknown) {
     if (method === 'Network.webSocketCreated') {
-      const p = params as Protocol.Network.WebSocketCreatedEvent;
+      const p = params as WebSocketCreatedEvent;
       this.sendToBackend({
         source: 'electron',
         type: 'websocket_created',
@@ -141,7 +167,7 @@ export class GameHandler {
         time: Date.now() / 1000,
       });
     } else if (method === 'Network.webSocketClosed') {
-      const p = params as Protocol.Network.WebSocketClosedEvent;
+      const p = params as WebSocketClosedEvent;
       this.sendToBackend({
         source: 'electron',
         type: 'websocket_closed',
@@ -149,16 +175,16 @@ export class GameHandler {
         time: Date.now() / 1000,
       });
     } else if (method === 'Network.webSocketFrameReceived') {
-      this.handleWebSocketFrame(params as Protocol.Network.WebSocketFrameReceivedEvent, 'inbound');
+      this.handleWebSocketFrame(params as WebSocketFrameReceivedEvent, 'inbound');
     } else if (method === 'Network.webSocketFrameSent') {
-      this.handleWebSocketFrame(params as Protocol.Network.WebSocketFrameSentEvent, 'outbound');
+      this.handleWebSocketFrame(params as WebSocketFrameSentEvent, 'outbound');
     } else if (method === 'Network.responseReceived') {
-      await this.handleResponseReceived(params as Protocol.Network.ResponseReceivedEvent);
+      await this.handleResponseReceived(params as ResponseReceivedEvent);
     }
   }
 
   private handleWebSocketFrame(
-    params: Protocol.Network.WebSocketFrameReceivedEvent | Protocol.Network.WebSocketFrameSentEvent,
+    params: WebSocketFrameReceivedEvent | WebSocketFrameSentEvent,
     direction: 'inbound' | 'outbound',
   ) {
     const { requestId, response } = params;
@@ -170,7 +196,7 @@ export class GameHandler {
     // CDP puts payloadData inside the 'response' object for both events
     if (response && response.payloadData) {
       data = response.payloadData;
-      opcode = response.opcode;
+      opcode = response.opcode ?? -1;
     } else {
       // Fallback: Check if payloadData is at the top level (older CDP or different backend)
       const p = params as unknown as Record<string, unknown>;
@@ -195,7 +221,7 @@ export class GameHandler {
     this.sendToBackend(payload);
   }
 
-  private async handleResponseReceived(params: Protocol.Network.ResponseReceivedEvent) {
+  private async handleResponseReceived(params: ResponseReceivedEvent) {
     const { response } = params;
 
     if (response.url && response.url.includes('liqi.json')) {
