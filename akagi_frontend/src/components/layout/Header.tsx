@@ -65,7 +65,7 @@ const HeaderContent: FC<HeaderProps> = memo(
       <header className='draggable bg-linear-to-b from-white/50 to-transparent dark:from-black/50 dark:to-transparent'>
         <div className='flex h-16 items-center justify-between px-4 sm:px-6'>
           {/* Logo & Title */}
-          <div className='no-drag flex items-center gap-3'>
+          <div className='flex items-center gap-3'>
             {/* Status Indicator */}
             <div className='relative flex h-2.5 w-2.5 items-center justify-center'>
               <ModelStatusIndicator

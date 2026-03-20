@@ -10,6 +10,7 @@ export function ExitOverlay() {
         <img
           src='torii.svg'
           alt='Akagi Logo'
+          draggable={false}
           className='relative h-24 w-24 drop-shadow-lg lg:h-32 lg:w-32'
         />
       </div>

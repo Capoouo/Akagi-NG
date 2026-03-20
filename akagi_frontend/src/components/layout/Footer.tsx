@@ -13,6 +13,7 @@ export const Footer: FC = memo(() => {
           <div className='h-3 w-px bg-zinc-300 dark:bg-zinc-700' />
           <a
             href='https://github.com/Xe-Persistent/Akagi-NG'
+            draggable={false}
             onClick={(e) => {
               e.preventDefault();
               window.electron.invoke('open-external', 'https://github.com/Xe-Persistent/Akagi-NG');
@@ -24,6 +25,7 @@ export const Footer: FC = memo(() => {
           </a>
           <a
             href='https://github.com/Xe-Persistent/Akagi-NG/blob/master/LICENSE'
+            draggable={false}
             onClick={(e) => {
               e.preventDefault();
               window.electron.invoke(

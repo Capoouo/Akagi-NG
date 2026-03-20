@@ -214,7 +214,9 @@
   }
 
   body {
-    @apply text-foreground overflow-hidden bg-zinc-100 antialiased dark:bg-zinc-900;
+    @apply text-foreground overflow-hidden overscroll-none bg-zinc-100 antialiased select-none dark:bg-zinc-900;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
     font-feature-settings:
       'rlig' 1,
       'calt' 1;

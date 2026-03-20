@@ -59,7 +59,7 @@ export const ThemeToggle: FC<ThemeToggleProps> = memo(({ theme, setTheme }) => {
             type='button'
             onClick={() => setTheme(value)}
             className={cn(
-              'no-drag relative z-10 flex aspect-square h-full flex-none items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-none',
+              'relative z-10 flex aspect-square h-full flex-none items-center justify-center rounded-full text-sm transition-colors focus-visible:outline-none',
               !isActive &&
                 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100',
             )}

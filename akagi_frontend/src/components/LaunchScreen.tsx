@@ -17,6 +17,7 @@ export function LaunchScreen({
         <img
           src='torii.svg'
           alt='Akagi Logo'
+          draggable={false}
           className={cn(
             'relative h-24 w-24 drop-shadow-lg lg:h-32 lg:w-32',
             !isStatic && 'animate-in fade-in zoom-in-50 slide-in-from-bottom-4 duration-1000',
