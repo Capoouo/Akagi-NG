@@ -69,6 +69,16 @@ def cleanup_app_packages(app_packages_dir: Path):
         p.unlink(missing_ok=True)
     for p in app_packages_dir.rglob("*.cpp"):
         p.unlink(missing_ok=True)
+    for p in app_packages_dir.rglob("*.cc"):
+        p.unlink(missing_ok=True)
+    for p in app_packages_dir.rglob("*.h"):
+        p.unlink(missing_ok=True)
+    for p in app_packages_dir.rglob("*.hpp"):
+        p.unlink(missing_ok=True)
+    # PyTorch and NumPy include massive C++ header directories useless at runtime
+    for p in app_packages_dir.glob("**/include"):
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
     # Delete pip metadata
     for p in app_packages_dir.glob("*.dist-info"):
         shutil.rmtree(p, ignore_errors=True)
