@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from akagi_ng.bridge.majsoul.liqi import MsgType, from_protobuf, to_protobuf
+from akagi_ng.bridge.majsoul.mod_proto import config_pb2, sheets_pb2
 from akagi_ng.bridge.majsoul.modifier import MajsoulModifier, ModCatalog
 
 
@@ -30,6 +31,38 @@ def test_to_protobuf_roundtrip():
     assert from_protobuf(to_protobuf(blocks))[1]["data"] == b"hello"
 
 
+def test_config_descriptor_loader_roundtrip():
+    tables = config_pb2.ConfigTables(
+        version="1",
+        header_hash="hash",
+        schemas=[config_pb2.TableSchema(name="item_definition")],
+    )
+
+    encoded = tables.SerializeToString()
+    decoded = config_pb2.ConfigTables()
+    decoded.ParseFromString(encoded)
+
+    assert decoded.version == "1"
+    assert decoded.header_hash == "hash"
+    assert decoded.schemas[0].name == "item_definition"
+
+
+def test_sheets_descriptor_loader_roundtrip():
+    voice_spot = sheets_pb2.VoiceSpot(
+        id=1,
+        character=200001,
+        type=2,
+        path="voice/test.ogg",
+    )
+
+    encoded = voice_spot.SerializeToString()
+    decoded = sheets_pb2.VoiceSpot()
+    decoded.ParseFromString(encoded)
+
+    assert decoded.id == 1
+    assert decoded.character == 200001
+    assert decoded.type == 2
+    assert decoded.path == "voice/test.ogg"
 def test_modifier_fakes_change_character_skin_request():
     modifier = make_modifier()
     liqi_proto = MagicMock()

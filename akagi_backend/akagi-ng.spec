@@ -1,7 +1,7 @@
 import tempfile
 import tomllib
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 import sys
 
@@ -71,12 +71,13 @@ if sys.platform == "win32":
 block_cipher = None
 
 hiddenimports = collect_submodules("numpy")
+datas = collect_data_files("akagi_ng.bridge.majsoul.mod_proto")
 
 a = Analysis(
     ['akagi_ng/__main__.py'],
     pathex=['.'],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=hiddenimports,
     excludes=[
         "pytest", "pytest-asyncio", "pytest-cov", "ruff", "pyinstaller",

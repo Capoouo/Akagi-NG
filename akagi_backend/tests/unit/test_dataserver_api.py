@@ -89,12 +89,69 @@ async def test_cors_middleware_options_allowed(cli):
 
 
 async def test_get_settings(cli):
-    with patch("akagi_ng.dataserver.api.get_settings_dict", return_value={"test": "val"}):
-        resp = await cli.get("/api/settings")
-        assert resp.status == 200
+    resp = await cli.get("/api/settings")
+    assert resp.status == 200
+    data = await resp.json()
+    assert data["ok"] is True
+    assert data["data"]["platform"] == "majsoul"
+    assert data["data"]["server"]["host"] == "127.0.0.1"
+    assert "model_config" in data["data"]
+
+
+async def test_get_models(cli):
+    resp = await cli.get("/api/models")
+    assert resp.status == 200
+    data = await resp.json()
+    assert "mortal.pth" in data["data"]
+    assert "mortal3p.pth" in data["data"]
+
+
+async def test_get_majsoul_mod_settings(cli):
+    resp = await cli.get("/api/majsoul-mod-settings")
+    assert resp.status == 200
+    data = await resp.json()
+    assert data["data"]["enabled"] is True
+    assert "config" in data["data"]
+    assert "resource" in data["data"]
+
+
+async def test_save_majsoul_mod_settings_invalid_json(cli):
+    resp = await cli.post("/api/majsoul-mod-settings", data="not json")
+    assert resp.status == 400
+    data = await resp.json()
+    assert data["ok"] is False
+
+
+async def test_save_majsoul_mod_settings(cli):
+    resp = await cli.post("/api/majsoul-mod-settings", json={"enabled": True})
+    assert resp.status == 200
+    data = await resp.json()
+    assert data["ok"] is True
+    assert data["data"]["enabled"] is True
+
+
+async def test_save_majsoul_mod_settings_internal_error(cli):
+    with patch("pathlib.Path.write_text", side_effect=RuntimeError("boom")):
+        resp = await cli.post("/api/majsoul-mod-settings", json={"enabled": True})
+        assert resp.status == 500
         data = await resp.json()
-        assert data["ok"] is True
-        assert data["data"] == {"test": "val"}
+        assert data["ok"] is False
+
+
+async def test_reset_majsoul_mod_settings(cli):
+    resp = await cli.post("/api/majsoul-mod-settings/reset")
+    assert resp.status == 200
+    data = await resp.json()
+    assert data["ok"] is True
+    assert data["data"]["enabled"] is True
+
+
+async def test_reset_majsoul_mod_settings_internal_error(cli):
+    with patch("pathlib.Path.write_text", side_effect=RuntimeError("boom")):
+        resp = await cli.post("/api/majsoul-mod-settings/reset")
+        assert resp.status == 500
+        data = await resp.json()
+        assert data["ok"] is False
 
 
 async def test_get_models(cli):

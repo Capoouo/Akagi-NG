@@ -56,7 +56,6 @@ akagi-ng = "akagi_ng.__main__:main"
 src = ["akagi_ng"]
 line-length = 120
 target-version = "py312"
-extend-exclude = ["akagi_ng/bridge/majsoul/mod_proto"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RET", "C90", "PLR", "TID", "C4", "RUF", "ANN"]
@@ -98,7 +97,7 @@ include = ["akagi_ng*"]
 exclude = ["frontend*", "logs*", "playwright_data*", ".venv*"]
 
 [tool.setuptools.package-data]
-"akagi_ng" = []
+"akagi_ng" = ["bridge/majsoul/mod_proto/*.desc"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
