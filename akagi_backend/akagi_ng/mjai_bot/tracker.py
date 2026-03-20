@@ -286,8 +286,7 @@ class StateTracker(StateTrackerProtocol):
                 return
 
             sim_candidates: list[SimCandidate] = [
-                SimCandidate(tile=act, confidence=float(conf))
-                for act, conf in lookahead_recs
+                SimCandidate(tile=act, confidence=float(conf)) for act, conf in lookahead_recs
             ][: MahjongConstants.MIN_RIICHI_CANDIDATES]
 
             for item in recommendations:
