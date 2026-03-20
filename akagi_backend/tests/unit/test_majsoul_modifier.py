@@ -63,6 +63,8 @@ def test_sheets_descriptor_loader_roundtrip():
     assert decoded.character == 200001
     assert decoded.type == 2
     assert decoded.path == "voice/test.ogg"
+
+
 def test_modifier_fakes_change_character_skin_request():
     modifier = make_modifier()
     liqi_proto = MagicMock()

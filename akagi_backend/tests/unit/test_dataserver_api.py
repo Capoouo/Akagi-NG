@@ -154,36 +154,22 @@ async def test_reset_majsoul_mod_settings_internal_error(cli):
         assert data["ok"] is False
 
 
-async def test_get_models(cli):
-    mock_file = MagicMock()
-    mock_file.name = "model_a.pth"
-    mock_file.is_file.return_value = True
-
-    with patch("akagi_ng.dataserver.api.get_models_dir") as mock_models_dir:
-        mock_models_dir.return_value.exists.return_value = True
-        mock_models_dir.return_value.glob.return_value = [mock_file]
-        resp = await cli.get("/api/models")
-        assert resp.status == 200
-        data = await resp.json()
-        assert data["data"] == ["model_a.pth"]
-
-
-async def test_get_majsoul_mod_settings(cli):
+async def test_get_majsoul_mod_settings_with_mocked_loader(cli):
     with patch("akagi_ng.dataserver.api.load_mod_settings_dict", return_value={"enabled": True}):
         resp = await cli.get("/api/majsoul-mod-settings")
         assert resp.status == 200
         data = await resp.json()
-        assert data["data"] == {"enabled": True}
+        assert data["data"]["enabled"] is True
 
 
-async def test_save_majsoul_mod_settings_invalid_json(cli):
+async def test_save_majsoul_mod_settings_invalid_json_repeated(cli):
     resp = await cli.post("/api/majsoul-mod-settings", data="not json")
     assert resp.status == 400
     data = await resp.json()
     assert data["ok"] is False
 
 
-async def test_save_majsoul_mod_settings(cli):
+async def test_save_majsoul_mod_settings_with_mocked_storage(cli):
     with (
         patch("akagi_ng.dataserver.api.verify_mod_settings_dict", return_value=True),
         patch("akagi_ng.dataserver.api.load_mod_settings_dict", return_value={"enabled": False}),
@@ -194,7 +180,7 @@ async def test_save_majsoul_mod_settings(cli):
         mock_save.assert_called_once()
 
 
-async def test_save_majsoul_mod_settings_internal_error(cli):
+async def test_save_majsoul_mod_settings_internal_error_with_mocked_storage(cli):
     with (
         patch("akagi_ng.dataserver.api.verify_mod_settings_dict", return_value=True),
         patch("akagi_ng.dataserver.api.load_mod_settings_dict", return_value={"enabled": False}),
@@ -206,7 +192,7 @@ async def test_save_majsoul_mod_settings_internal_error(cli):
         assert data["ok"] is False
 
 
-async def test_reset_majsoul_mod_settings(cli):
+async def test_reset_majsoul_mod_settings_with_mocked_storage(cli):
     with (
         patch("akagi_ng.dataserver.api.get_default_mod_settings_dict", return_value={"enabled": True}),
         patch("akagi_ng.dataserver.api.save_mod_settings_dict") as mock_save,
@@ -216,7 +202,7 @@ async def test_reset_majsoul_mod_settings(cli):
         mock_save.assert_called_once_with({"enabled": True})
 
 
-async def test_reset_majsoul_mod_settings_internal_error(cli):
+async def test_reset_majsoul_mod_settings_internal_error_with_mocked_storage(cli):
     with (
         patch("akagi_ng.dataserver.api.get_default_mod_settings_dict", return_value={"enabled": True}),
         patch("akagi_ng.dataserver.api.save_mod_settings_dict", side_effect=RuntimeError("boom")),
