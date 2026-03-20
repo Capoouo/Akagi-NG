@@ -30,6 +30,10 @@ export class BackendManager {
   private rejectReady!: (reason?: Error) => void;
 
   public async getBackendConfig(): Promise<{ host: string; port: number }> {
+    if (process.env.AKAGI_MOCK_MODE === '1') {
+      return { host: '127.0.0.1', port: 8765 };
+    }
+
     const defaultHost = '127.0.0.1';
     const defaultPort = 8765;
 
@@ -161,15 +165,20 @@ export class BackendManager {
       return;
     }
 
-    const shell = process.platform === 'win32';
-    this.pyProcess = spawn('npx', ['tsx', 'mock.ts'], {
-      cwd: frontendRoot,
-      shell: shell,
-      env: {
-        ...process.env,
-        FORCE_COLOR: '1',
-      },
-    });
+    const isWin = process.platform === 'win32';
+    if (isWin) {
+      this.pyProcess = spawn('npx tsx mock.ts', {
+        cwd: frontendRoot,
+        shell: true,
+        env: { ...process.env, FORCE_COLOR: '1' },
+      });
+    } else {
+      this.pyProcess = spawn('npx', ['tsx', 'mock.ts'], {
+        cwd: frontendRoot,
+        shell: false,
+        env: { ...process.env, FORCE_COLOR: '1' },
+      });
+    }
 
     this.pyProcess.on('error', (err) => {
       console.error('Failed to spawn mock backend process:', err);
