@@ -45,7 +45,6 @@
   },
   "build": {
     "appId": "me.akagi.ng",
-    "compression": "normal",
     "artifactName": "Akagi-NG-${version}-${os}-${arch}.${ext}",
     "productName": "Akagi-NG",
     "icon": "../assets/torii.ico",
@@ -86,39 +85,28 @@
       {
         "from": "../README.txt",
         "to": "."
+      },
+      {
+        "from": "../dist/backend/akagi-ng",
+        "to": "bin"
       }
     ],
     "npmRebuild": false,
     "win": {
       "target": "zip",
-      "icon": "../assets/torii.ico",
-      "extraFiles": [
-        {
-          "from": "../dist/backend/akagi-ng",
-          "to": "bin"
-        }
-      ]
+      "icon": "../assets/torii.ico"
     },
     "mac": {
       "target": "dmg",
       "icon": "../assets/torii.icns",
       "category": "public.app-category.games",
-      "extraFiles": [
-        {
-          "from": "../dist/backend/akagi-ng",
-          "to": "MacOS/bin"
-        }
+      "binaries": [
+        "Contents/bin/python/bin/python3"
       ]
     },
     "linux": {
       "target": "AppImage",
-      "icon": "../assets/torii.png",
-      "extraFiles": [
-        {
-          "from": "../dist/backend/akagi-ng",
-          "to": "bin"
-        }
-      ]
+      "icon": "../assets/torii.png"
     },
     "copyright": "Copyright (C) 2026 Akagi-NG Contributors"
   }

@@ -73,7 +73,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate || source .venv/Scripts/activate
           python -m pip install --upgrade pip
-          pip install -e . "pyinstaller>=6.0.0"
+          pip install -e .
 
       - name: Install JS dependencies
         run: |
@@ -95,6 +95,7 @@ jobs:
             dist/release/*.zip
             dist/release/*.dmg
             dist/release/*.tar.gz
+            dist/release/*.AppImage
           retention-days: 30
           if-no-files-found: warn
 

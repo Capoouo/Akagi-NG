@@ -190,22 +190,23 @@ export class BackendManager {
   private startProdBackend() {
     console.log('Starting backend in PROD mode...');
 
-    const binaryName = process.platform === 'win32' ? 'akagi-ng.exe' : 'akagi-ng';
-    const isPackagedMac = app.isPackaged && process.platform === 'darwin';
-    const binaryPath = getAssetPath(isPackagedMac ? 'MacOS/bin' : 'bin', binaryName);
+    const isWin = process.platform === 'win32';
+    const bundleDir = getAssetPath('bin');
+    const pythonExecutable = path.join(bundleDir, 'python', isWin ? 'python.exe' : 'bin/python3');
 
-    if (!fs.existsSync(binaryPath)) {
-      const msg = `Executable not found at ${binaryPath}`;
+    if (!fs.existsSync(pythonExecutable)) {
+      const msg = `Portable Python not found at ${pythonExecutable}`;
       console.error(`[BackendManager] ${msg}`);
       dialog.showErrorBox('Startup Error', msg);
       return;
     }
 
     try {
-      this.pyProcess = spawn(binaryPath, [], {
+      this.pyProcess = spawn(pythonExecutable, ['-m', 'akagi_ng'], {
         cwd: getProjectRoot(),
         env: {
           ...process.env,
+          PYTHONPATH: path.join(bundleDir, 'app_packages'),
           PYTHONUNBUFFERED: '1',
           AKAGI_GUI_MODE: '1',
         },

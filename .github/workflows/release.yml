@@ -76,7 +76,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate || source .venv/Scripts/activate
           python -m pip install --upgrade pip
-          pip install -e . "pyinstaller>=6.0.0"
+          pip install -e .
 
       - name: Install JS dependencies
         run: |
@@ -97,6 +97,7 @@ jobs:
             dist/release/*.zip
             dist/release/*.dmg
             dist/release/*.tar.gz
+            dist/release/*.AppImage
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
