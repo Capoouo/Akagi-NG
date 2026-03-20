@@ -19,6 +19,7 @@ import { useSettings } from '@/hooks/useSettings';
 
 import { ConnectionSection } from './settings/ConnectionSection';
 import { GeneralSection } from './settings/GeneralSection';
+import { MajsoulModSection } from './settings/MajsoulModSection';
 import { ModelConfigSection } from './settings/ModelConfigSection';
 import { ServiceSection } from './settings/ServiceSection';
 
@@ -32,7 +33,6 @@ const SettingsPanel: FC<SettingsPanelProps> = memo(({ open, onClose }) => {
   const {
     settings,
     restartRequired,
-    isRestored,
     updateSetting,
     updateSettingsBatch,
     restoreDefaults,
@@ -57,30 +57,25 @@ const SettingsPanel: FC<SettingsPanelProps> = memo(({ open, onClose }) => {
         <ModalTitle>{t('app.settings_title')}</ModalTitle>
         <ModalDescription>{t('app.settings_desc')}</ModalDescription>
         {restartRequired && (
-          <StatusBar variant='warning' className='mt-4 items-center justify-center text-center'>
+          <StatusBar
+            variant='warning'
+            className='mt-4 items-center justify-center text-center'
+            icon={AlertTriangle}
+          >
             {t('settings.restart_required')}
-          </StatusBar>
-        )}
-        {isRestored && (
-          <StatusBar variant='info' className='mt-4 items-center justify-center text-center'>
-            {t('settings.restored_success')}
           </StatusBar>
         )}
       </ModalHeader>
 
       <ModalContent>
         <ErrorBoundary
-          fallback={(error: Error) => (
+          fallback={() => (
             <div className='flex flex-col items-center justify-center p-8 text-center'>
               <AlertTriangle className='text-destructive mb-4 h-10 w-10' />
               <h3 className='text-destructive mb-2 text-lg font-semibold'>
                 {t('common.connection_failed')}
               </h3>
-              <p className='text-muted-foreground mb-4 max-w-xs text-sm whitespace-pre-wrap'>
-                {t('settings.load_error_desc')}
-                {'\n'}
-                {error.message || String(error)}
-              </p>
+              <p className='text-muted-foreground mb-4 max-w-xs'>{t('settings.load_error_desc')}</p>
 
               <Button onClick={onClose}>{t('common.close')}</Button>
             </div>
@@ -99,6 +94,10 @@ const SettingsPanel: FC<SettingsPanelProps> = memo(({ open, onClose }) => {
             <ServiceSection settings={settings} updateSetting={updateSetting} />
 
             <ModelConfigSection settings={settings} updateSetting={updateSetting} />
+
+            {['majsoul', 'auto'].includes(settings.platform) && settings.mitm.enabled && (
+              <MajsoulModSection open={open} />
+            )}
 
             <div className='flex justify-end border-t border-white/5 pt-6'>
               <Button
