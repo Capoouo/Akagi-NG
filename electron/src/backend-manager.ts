@@ -192,7 +192,11 @@ export class BackendManager {
 
     const isWin = process.platform === 'win32';
     const bundleDir = getAssetPath('bin');
-    const pythonExecutable = path.join(bundleDir, 'python', isWin ? 'python.exe' : 'bin/python3');
+    const pythonExecutable = path.join(
+      bundleDir,
+      'python',
+      isWin ? 'akagi-ng.exe' : 'bin/akagi-ng',
+    );
 
     if (!fs.existsSync(pythonExecutable)) {
       const msg = `Portable Python not found at ${pythonExecutable}`;

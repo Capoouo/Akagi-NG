@@ -107,7 +107,7 @@
       "icon": "../assets/torii.icns",
       "category": "public.app-category.games",
       "binaries": [
-        "Contents/bin/python/bin/python3"
+        "Contents/bin/python/bin/akagi-ng"
       ]
     },
     "linux": {
