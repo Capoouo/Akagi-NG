@@ -45,6 +45,13 @@
   },
   "build": {
     "appId": "me.akagi.ng",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Xe-Persistent",
+        "repo": "Akagi-NG"
+      }
+    ],
     "artifactName": "Akagi-NG-${version}-${os}-${arch}.${ext}",
     "productName": "Akagi-NG",
     "icon": "../assets/torii.ico",
@@ -125,5 +132,8 @@
       ]
     },
     "copyright": "Copyright (C) 2026 Akagi-NG Contributors"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
   }
 }

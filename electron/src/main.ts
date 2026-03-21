@@ -7,10 +7,12 @@ import {
   BACKEND_STARTUP_CHECK_TIMEOUT_MS,
 } from './constants';
 import { registerIpcHandlers } from './ipc-handlers';
+import { UpdaterManager } from './updater';
 import { WindowManager } from './window-manager';
 
 const backendManager = new BackendManager();
 const windowManager = new WindowManager(backendManager);
+const updaterManager = new UpdaterManager(windowManager);
 
 process.on('uncaughtException', (error) => {
   console.error('[Main] Uncaught Exception:', error);
@@ -22,8 +24,11 @@ process.on('unhandledRejection', (reason) => {
 });
 
 app.whenReady().then(async () => {
-  // 1. Register all IPC handlers
+  // 0. Register all IPC handlers
   registerIpcHandlers(windowManager, backendManager);
+
+  // 1. Setup Auto Updater
+  updaterManager.checkForUpdates();
 
   // 2. Start Python Backend
   backendManager.start();

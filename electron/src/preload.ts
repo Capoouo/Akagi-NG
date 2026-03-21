@@ -16,6 +16,8 @@ const VALID_INVOKE_CHANNELS = [
   'wait-for-backend',
   'update-locale',
   'set-window-bounds',
+  'app:start-download',
+  'app:install-update',
 ] as const;
 
 const VALID_ON_CHANNELS = [
@@ -23,6 +25,9 @@ const VALID_ON_CHANNELS = [
   'window-state-changed',
   'exit-animation-start',
   'locale-changed',
+  'app:update-available',
+  'app:update-progress',
+  'app:update-downloaded',
 ] as const;
 
 contextBridge.exposeInMainWorld('electron', {
