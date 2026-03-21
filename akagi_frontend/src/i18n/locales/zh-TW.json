@@ -76,7 +76,7 @@
   "app": {
     "title": "Akagi Next-Generation",
     "launch_game": "啟動遊戲",
-    "startup_failed": "應用程式無法連線至後台服務。",
+    "startup_failed": "應用程式啟動失敗",
     "launch_error": "無法取得游戏 URL，請檢查設定",
     "settings_title": "Akagi NG 設定",
     "settings_desc": "應用配置面板",

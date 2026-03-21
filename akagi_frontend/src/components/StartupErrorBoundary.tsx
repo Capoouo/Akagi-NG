@@ -13,12 +13,8 @@ export function StartupErrorBoundary({ children }: { children: ReactNode }) {
       fallback={(error: Error) => (
         <div className='bg-background text-foreground flex min-h-screen w-full flex-col items-center justify-center p-8 text-center tracking-tight'>
           <CircleX className='text-destructive mb-4 h-10 w-10' />
-          <h3 className='text-destructive mb-2 text-lg font-semibold'>
-            {t('common.connection_failed')}
-          </h3>
+          <h3 className='text-destructive mb-2 text-lg font-semibold'>{t('app.startup_failed')}</h3>
           <p className='text-muted-foreground mb-4 max-w-lg text-sm whitespace-pre-wrap'>
-            {t('app.startup_failed')}
-            {'\n'}
             {error.message || String(error)}
           </p>
           <Button
