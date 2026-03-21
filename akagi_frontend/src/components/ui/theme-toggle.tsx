@@ -67,7 +67,7 @@ export const ThemeToggle: FC<ThemeToggleProps> = memo(({ theme, setTheme }) => {
           >
             <Icon
               className={cn(
-                'h-[60%] w-[60%] transition-colors',
+                'h-3/5 w-3/5 transition-colors',
                 isActive ? activeColor.split(' ').find((c) => c.startsWith('text-')) : '',
               )}
             />

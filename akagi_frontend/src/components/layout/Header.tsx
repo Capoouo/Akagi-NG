@@ -144,7 +144,7 @@ const HeaderContent: FC<HeaderProps> = memo(
 
             <HeaderIconButton
               icon={isMaximized ? Copy : Square}
-              iconClassName={isMaximized ? 'scale-x-[-1] -rotate-90' : ''}
+              iconClassName={isMaximized ? '-scale-x-100 -rotate-90' : ''}
               onClick={() => window.electron.invoke('maximize-window')}
               aria-label={isMaximized ? 'Restore' : 'Maximize'}
             />
