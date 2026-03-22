@@ -1,9 +1,0 @@
-dist/
-build/
-frontend/
-node_modules/
-coverage/
-.env
-.env.*
-public/
-package-lock.json

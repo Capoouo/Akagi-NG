@@ -4,108 +4,80 @@
 version: 2
 updates:
   # GitHub Actions 版本更新
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Shanghai"
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Shanghai
     labels:
-      - "dependencies"
+      - dependencies
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: ci
+      include: scope
     open-pull-requests-limit: 5
     # 分组合并次要和补丁版本更新
     groups:
       actions-dependencies:
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
 
   # Python 后端依赖更新
-  - package-ecosystem: "pip"
-    directory: "/akagi_backend"
+  - package-ecosystem: pip
+    directory: /akagi_backend
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Shanghai"
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Shanghai
     labels:
-      - "dependencies"
-      - "python"
+      - dependencies
+      - python
     commit-message:
-      prefix: "deps"
-      include: "scope"
+      prefix: deps
+      include: scope
     open-pull-requests-limit: 10
     # 分组合并次要和补丁版本更新
     groups:
       python-dependencies:
         patterns:
-          - "*"
+          - '*'
         update-types:
-          - "minor"
-          - "patch"
+          - minor
+          - patch
 
-  # Node.js 前端依赖更新
-  - package-ecosystem: "npm"
-    directory: "/akagi_frontend"
+  # Node.js 依赖更新
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Shanghai"
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Shanghai
     labels:
-      - "dependencies"
-      - "frontend"
+      - dependencies
+      - npm
     commit-message:
-      prefix: "deps"
-      include: "scope"
+      prefix: deps
+      include: scope
     open-pull-requests-limit: 10
-    # 分组更新策略
     groups:
-      # 生产依赖一起更新
       production-dependencies:
-        dependency-type: "production"
+        dependency-type: production
         update-types:
-          - "minor"
-          - "patch"
-      # 开发依赖一起更新
+          - minor
+          - patch
       development-dependencies:
-        dependency-type: "development"
+        dependency-type: development
         update-types:
-          - "minor"
-          - "patch"
-    # 忽略某些依赖
+          - minor
+          - patch
     ignore:
-      # @types/node 应该与 Node.js 运行时版本保持一致，手动更新
-      - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
-
-  # Electron Desktop 依赖更新
-  - package-ecosystem: "npm"
-    directory: "/electron"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Shanghai"
-    labels:
-      - "dependencies"
-      - "electron"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    open-pull-requests-limit: 10
-    groups:
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "minor"
-          - "patch"
-    ignore:
-      - dependency-name: "electron"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'electron'
+        update-types: ['version-update:semver-major']

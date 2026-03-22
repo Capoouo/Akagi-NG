@@ -1,9 +1,10 @@
-import type { ChildProcess } from 'child_process';
-import { spawn } from 'child_process';
+import type { ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { delimiter, join } from 'node:path';
+
 import { app, dialog } from 'electron';
-import fs from 'fs';
-import fsPromises from 'fs/promises';
-import path from 'path';
 
 interface AppSettings {
   server?: {
@@ -28,9 +29,10 @@ export class BackendManager {
   private readyPromise: Promise<void>;
   private resolveReady!: () => void;
   private rejectReady!: (reason?: Error) => void;
+  private isMockMode: boolean = false;
 
   public async getBackendConfig(): Promise<{ host: string; port: number }> {
-    if (process.env.AKAGI_MOCK_MODE === '1') {
+    if (process.argv.includes('--mock')) {
       return { host: '127.0.0.1', port: 8765 };
     }
 
@@ -39,7 +41,7 @@ export class BackendManager {
 
     try {
       const settingsPath = getAssetPath('config', 'settings.json');
-      const fileContent = await fsPromises.readFile(settingsPath, 'utf8');
+      const fileContent = await readFile(settingsPath, 'utf8');
       const settings = JSON.parse(fileContent) as AppSettings;
 
       return {
@@ -64,7 +66,7 @@ export class BackendManager {
 
     try {
       const settingsPath = getAssetPath('config', 'settings.json');
-      const fileContent = await fsPromises.readFile(settingsPath, 'utf8');
+      const fileContent = await readFile(settingsPath, 'utf8');
       const settings = JSON.parse(fileContent) as AppSettings;
 
       return {
@@ -84,6 +86,7 @@ export class BackendManager {
   }
 
   public isRunning(): boolean {
+    if (this.isMockMode) return true;
     return !!this.pyProcess && !this.pyProcess.killed;
   }
 
@@ -92,6 +95,8 @@ export class BackendManager {
       this.resolveReady = resolve;
       this.rejectReady = reject;
     });
+    this.readyPromise.catch(() => {});
+
     this.validator = new ResourceValidator(getProjectRoot());
   }
 
@@ -107,7 +112,8 @@ export class BackendManager {
 
     const isDev = !app.isPackaged;
 
-    if (process.env.AKAGI_MOCK_MODE === '1') {
+    if (process.argv.includes('--mock')) {
+      this.isMockMode = true;
       this.startMockBackend();
     } else if (isDev) {
       this.startDevBackend();
@@ -120,17 +126,17 @@ export class BackendManager {
     console.log('Starting backend in DEV mode...');
 
     const projectRoot = getProjectRoot();
-    const backendRoot = path.join(projectRoot, 'akagi_backend');
-    const venvDir = path.join(backendRoot, '.venv');
+    const backendRoot = join(projectRoot, 'akagi_backend');
+    const venvDir = join(backendRoot, '.venv');
 
     let pythonExecutable: string;
     if (process.platform === 'win32') {
-      pythonExecutable = path.join(venvDir, 'Scripts', 'python.exe');
+      pythonExecutable = join(venvDir, 'Scripts', 'python.exe');
     } else {
-      pythonExecutable = path.join(venvDir, 'bin', 'python');
+      pythonExecutable = join(venvDir, 'bin', 'python');
     }
 
-    if (!fs.existsSync(pythonExecutable)) {
+    if (!existsSync(pythonExecutable)) {
       const errorMsg = `Python executable NOT FOUND at: ${pythonExecutable}. Please check your environment.`;
       console.error(`[BackendManager] ${errorMsg}`);
       dialog.showErrorBox('Backend Initialization Failed', errorMsg);
@@ -141,8 +147,9 @@ export class BackendManager {
       ...process.env,
       PYTHONUNBUFFERED: '1',
       AKAGI_GUI_MODE: '1',
-      PYTHONPATH:
-        backendRoot + (process.platform === 'win32' ? ';' : ':') + (process.env.PYTHONPATH || ''),
+      PYTHONPATH: process.env.PYTHONPATH
+        ? `${backendRoot}${delimiter}${process.env.PYTHONPATH}`
+        : backendRoot,
     };
 
     this.pyProcess = spawn(pythonExecutable, ['-m', 'akagi_ng'], {
@@ -154,37 +161,7 @@ export class BackendManager {
   }
 
   private startMockBackend() {
-    console.log('Starting backend in MOCK mode...');
-
-    const projectRoot = getProjectRoot();
-    const frontendRoot = path.join(projectRoot, 'akagi_frontend');
-    const mockScript = path.join(frontendRoot, 'mock.ts');
-
-    if (!fs.existsSync(mockScript)) {
-      console.error(`[BackendManager] Mock script NOT FOUND at: ${mockScript}`);
-      return;
-    }
-
-    const isWin = process.platform === 'win32';
-    if (isWin) {
-      this.pyProcess = spawn('npx tsx mock.ts', {
-        cwd: frontendRoot,
-        shell: true,
-        env: { ...process.env, FORCE_COLOR: '1' },
-      });
-    } else {
-      this.pyProcess = spawn('npx', ['tsx', 'mock.ts'], {
-        cwd: frontendRoot,
-        shell: false,
-        env: { ...process.env, FORCE_COLOR: '1' },
-      });
-    }
-
-    this.pyProcess.on('error', (err) => {
-      console.error('Failed to spawn mock backend process:', err);
-    });
-
-    this.setupListeners();
+    console.log('[BackendManager] Starting backend in MOCK mode...');
   }
 
   private startProdBackend() {
@@ -192,13 +169,9 @@ export class BackendManager {
 
     const isWin = process.platform === 'win32';
     const bundleDir = getAssetPath('bin');
-    const pythonExecutable = path.join(
-      bundleDir,
-      'python',
-      isWin ? 'akagi-ng.exe' : 'bin/akagi-ng',
-    );
+    const pythonExecutable = join(bundleDir, 'python', isWin ? 'akagi-ng.exe' : 'bin/akagi-ng');
 
-    if (!fs.existsSync(pythonExecutable)) {
+    if (!existsSync(pythonExecutable)) {
       const msg = `Portable Python not found at ${pythonExecutable}`;
       console.error(`[BackendManager] ${msg}`);
       dialog.showErrorBox('Startup Error', msg);
@@ -210,16 +183,10 @@ export class BackendManager {
         cwd: getProjectRoot(),
         env: {
           ...process.env,
-          PYTHONPATH: path.join(bundleDir, 'app_packages'),
+          PYTHONPATH: join(bundleDir, 'app_packages'),
           PYTHONUNBUFFERED: '1',
           AKAGI_GUI_MODE: '1',
         },
-      });
-
-      this.pyProcess.on('error', (err) => {
-        const msg = `Failed to start backend process: ${err.message}`;
-        console.error(`[BackendManager] ${msg}`);
-        dialog.showErrorBox('Backend Error', msg);
       });
 
       this.setupListeners();
@@ -232,6 +199,12 @@ export class BackendManager {
 
   private setupListeners() {
     if (!this.pyProcess) return;
+
+    this.pyProcess.on('error', (err) => {
+      const msg = `Failed to execute backend process: ${err.message}`;
+      console.error(`[BackendManager] ${msg}`);
+      dialog.showErrorBox('Backend Fatal Error', msg);
+    });
 
     this.pyProcess.stdout?.on('data', (data) => {
       console.log(`${data.toString().trim()}`);
@@ -282,7 +255,7 @@ export class BackendManager {
     }
 
     await new Promise<void>((resolve) => {
-      if (!this.isRunning()) return resolve();
+      if (!this.pyProcess) return resolve();
 
       const timeout = setTimeout(() => {
         if (this.isRunning()) {

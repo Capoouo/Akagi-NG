@@ -1,0 +1,51 @@
+{
+  "name": "akagi-ng-root",
+  "private": true,
+  "version": "1.0.6",
+  "description": "Akagi-NG is a next-generation rewrite inspired by Akagi and MajsoulHelper, focusing on modern architecture and UI.",
+  "author": "Akagi-NG Contributors",
+  "license": "AGPL-3.0",
+  "engines": {
+    "node": ">=24.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xe-Persistent/Akagi-NG.git"
+  },
+  "workspaces": [
+    "akagi_frontend",
+    "electron"
+  ],
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev -w akagi-frontend\" \"npm run dev -w akagi-ng-desktop\"",
+    "dev:mock": "concurrently -k \"tsx scripts/mock_server.ts\" \"npm run dev -w akagi-frontend\" \"npm run dev:mock -w akagi-ng-desktop\"",
+    "clean": "tsx scripts/clean.ts",
+    "sync-version": "tsx scripts/sync_version.ts",
+    "prepare-release": "tsx scripts/prepare_release.ts",
+    "build:backend": "tsx scripts/build_backend.ts",
+    "build": "npm run clean && npm run sync-version && npm run build -w akagi-frontend && npm run build:backend && npm run build -w akagi-ng-desktop && npm run prepare-release && npm run package -w akagi-ng-desktop",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "typecheck": "npm exec --workspaces -- tsc --noEmit --pretty"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
+  }
+}

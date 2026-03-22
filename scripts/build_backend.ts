@@ -1,16 +1,12 @@
-import { spawnSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
-/**
- * Robust backend build script that finds the correct Python executable
- */
 function buildBackend() {
   try {
-    const electronDir = path.resolve(__dirname, '..');
-    const projectRoot = path.resolve(electronDir, '..');
-    const backendDir = path.join(projectRoot, 'akagi_backend');
-    const buildScript = path.join(backendDir, 'scripts', 'build_backend.py');
+    const projectRoot = resolve(__dirname, '..');
+    const backendDir = join(projectRoot, 'akagi_backend');
+    const buildScript = join(backendDir, 'scripts', 'build_backend.py');
 
     console.log('🔍 Identifying Python executable...');
 
@@ -18,10 +14,10 @@ function buildBackend() {
     let pythonPath = 'python'; // Default to system PATH
     const venvPythonExec =
       process.platform === 'win32'
-        ? path.join(backendDir, '.venv', 'Scripts', 'python.exe')
-        : path.join(backendDir, '.venv', 'bin', 'python');
+        ? join(backendDir, '.venv', 'Scripts', 'python.exe')
+        : join(backendDir, '.venv', 'bin', 'python');
 
-    if (fs.existsSync(venvPythonExec)) {
+    if (existsSync(venvPythonExec)) {
       pythonPath = venvPythonExec;
       console.log(`✅ Using virtual environment: ${pythonPath}`);
     } else {
@@ -31,7 +27,7 @@ function buildBackend() {
     console.log(`🚀 Running backend build script: ${buildScript}`);
 
     const result = spawnSync(pythonPath, [buildScript], {
-      cwd: electronDir,
+      cwd: projectRoot,
       stdio: 'inherit',
       shell: false,
     });

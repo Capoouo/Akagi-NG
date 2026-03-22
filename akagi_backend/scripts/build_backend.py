@@ -131,9 +131,7 @@ def patch_and_rename_binaries(dist_dir: Path, backend_root: Path, version_str: s
         win_exe.rename(akagi_exe)
 
         # 修改 exe 图标和文件描述信息
-        rcedit_path = (
-            backend_root.parent / "electron" / "node_modules" / "electron-winstaller" / "vendor" / "rcedit.exe"
-        )
+        rcedit_path = backend_root.parent / "node_modules" / "electron-winstaller" / "vendor" / "rcedit.exe"
         icon_path = backend_root.parent / "assets" / "torii.ico"
         if rcedit_path.exists() and icon_path.exists():
             print(f"   🎨 Patching icon and metadata for {akagi_exe.name}...")
@@ -180,10 +178,9 @@ def patch_and_rename_binaries(dist_dir: Path, backend_root: Path, version_str: s
         if real_exe.exists():
             real_exe.rename(unix_bin_dir / "akagi-ng")
         # 移除所有旧的软链接
-        for old_symlink in ["python", "python3"]:
-            old_path = unix_bin_dir / old_symlink
-            if old_path.exists() and old_path.is_symlink():
-                old_path.unlink(missing_ok=True)
+        for item in unix_bin_dir.iterdir():
+            if item.is_symlink():
+                item.unlink(missing_ok=True)
 
 
 def main():

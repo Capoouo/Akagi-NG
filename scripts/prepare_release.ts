@@ -1,37 +1,37 @@
-import fs from 'fs';
-import path from 'path';
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { platform as getPlatform } from 'node:os';
+import { join, resolve } from 'node:path';
 
-const rootDir = path.resolve(__dirname, '../../');
-const extraDir = path.join(rootDir, 'build', 'extra');
+const rootDir = resolve(__dirname, '../');
+const extraDir = join(rootDir, 'build', 'extra');
 
 // 0. Ensure extraDir exists
-if (fs.existsSync(extraDir)) {
-  fs.rmSync(extraDir, { recursive: true, force: true });
+if (existsSync(extraDir)) {
+  rmSync(extraDir, { recursive: true, force: true });
 }
-fs.mkdirSync(extraDir, { recursive: true });
+mkdirSync(extraDir, { recursive: true });
 
 console.log('📦 Preparing release assets...');
 
 // 1. Create target folders
 ['lib', 'models', 'logs', 'config'].forEach((folder) => {
-  const folderPath = path.join(extraDir, folder);
-  if (!fs.existsSync(folderPath)) {
-    fs.mkdirSync(folderPath);
+  const folderPath = join(extraDir, folder);
+  if (!existsSync(folderPath)) {
+    mkdirSync(folderPath);
   }
 });
 
 // 2. Bundle Models
 ['mortal.pth', 'mortal3p.pth', 'LICENSE'].forEach((modelFile) => {
-  const src = path.join(rootDir, 'models', modelFile);
-  if (fs.existsSync(src)) {
-    fs.copyFileSync(src, path.join(extraDir, 'models', modelFile));
+  const src = join(rootDir, 'models', modelFile);
+  if (existsSync(src)) {
+    copyFileSync(src, join(extraDir, 'models', modelFile));
     console.log(`   ✅ Bundled model: ${modelFile}`);
   }
 });
 
 // 3. Bundle and rename libriichi for current platform
-import os from 'os';
-const platform = os.platform();
+const platform = getPlatform();
 
 const sysStr =
   platform === 'win32'
@@ -44,15 +44,15 @@ const archStr = platform === 'darwin' ? 'aarch64' : 'x86_64';
 
 ['libriichi', 'libriichi3p'].forEach((prefix) => {
   const pattern = `${prefix}-3.12-${archStr}-${sysStr}.${ext}`;
-  const srcFile = path.join(rootDir, 'lib', pattern);
-  if (fs.existsSync(srcFile)) {
-    fs.copyFileSync(srcFile, path.join(extraDir, 'lib', `${prefix}.${ext}`));
+  const srcFile = join(rootDir, 'lib', pattern);
+  if (existsSync(srcFile)) {
+    copyFileSync(srcFile, join(extraDir, 'lib', `${prefix}.${ext}`));
     console.log(`   ✅ Bundled lib: ${prefix}.${ext} (from ${pattern})`);
   } else {
     // try fallback
-    const fallbackSrc = path.join(rootDir, 'lib', `${prefix}.${ext}`);
-    if (fs.existsSync(fallbackSrc)) {
-      fs.copyFileSync(fallbackSrc, path.join(extraDir, 'lib', `${prefix}.${ext}`));
+    const fallbackSrc = join(rootDir, 'lib', `${prefix}.${ext}`);
+    if (existsSync(fallbackSrc)) {
+      copyFileSync(fallbackSrc, join(extraDir, 'lib', `${prefix}.${ext}`));
       console.log(`   ✅ Bundled lib: ${prefix}.${ext} (from fallback exact match)`);
     } else {
       console.warn(`   ⚠️ Warning: Could not find lib file ${pattern}`);
@@ -61,15 +61,15 @@ const archStr = platform === 'darwin' ? 'aarch64' : 'x86_64';
 });
 
 // 4. Copy lib/LICENSE
-const libLicense = path.join(rootDir, 'lib', 'LICENSE');
-if (fs.existsSync(libLicense)) {
-  fs.copyFileSync(libLicense, path.join(extraDir, 'lib', 'LICENSE'));
+const libLicense = join(rootDir, 'lib', 'LICENSE');
+if (existsSync(libLicense)) {
+  copyFileSync(libLicense, join(extraDir, 'lib', 'LICENSE'));
   console.log('   ✅ Bundled lib: LICENSE');
 }
 
 // 5. Config/Logs placeholders
 ['logs', 'config'].forEach((folder) => {
-  fs.writeFileSync(path.join(extraDir, folder, '_placeholder'), '');
+  writeFileSync(join(extraDir, folder, '_placeholder'), '');
 });
 
 console.log('✅ Release assets prepared in build/extra');
