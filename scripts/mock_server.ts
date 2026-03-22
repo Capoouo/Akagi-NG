@@ -1,6 +1,6 @@
-import http from 'node:http';
+import { createServer } from 'node:http';
 
-import type { FullRecommendationData, Settings } from '@/types';
+import type { FullRecommendationData, Settings } from '../akagi_frontend/src/types';
 
 console.log('Starting server in MOCK mode (SSE) for Recommendation Visual Test.');
 
@@ -46,7 +46,7 @@ const defaultSettings: Settings = {
 
 let mockSettings: Settings = { ...defaultSettings };
 
-const server = http.createServer((req, res) => {
+const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
 
   console.log(`[REQUEST] ${req.method} ${req.url}`);

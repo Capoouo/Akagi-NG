@@ -1,4 +1,4 @@
-import type { ResourceStatus } from './types';
+import type { ResourceStatus } from '@/types';
 
 // Electron IPC 通道类型定义
 
@@ -25,6 +25,8 @@ interface InvokeChannelParams {
     width?: number;
     height?: number;
   };
+  'app:start-download': void;
+  'app:install-update': void;
 }
 
 // ===== Invoke 通道返回值类型 =====
@@ -44,6 +46,8 @@ interface InvokeChannelReturns {
   };
   'update-locale': boolean;
   'set-window-bounds': boolean;
+  'app:start-download': { success: boolean; error?: string };
+  'app:install-update': boolean;
 }
 
 // ===== On 通道事件参数类型 =====
@@ -52,6 +56,9 @@ interface OnChannelParams {
   'window-state-changed': [maximized: boolean];
   'exit-animation-start': [];
   'locale-changed': [locale: string];
+  'app:update-available': [version: string];
+  'app:update-progress': [progressObj: { percent: number }];
+  'app:update-downloaded': [];
 }
 
 // ===== Electron IPC API =====

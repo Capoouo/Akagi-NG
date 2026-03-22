@@ -1,5 +1,6 @@
+import { join } from 'node:path';
+
 import { app, BrowserWindow, nativeTheme, screen } from 'electron';
-import path from 'path';
 
 import type { BackendManager } from './backend-manager';
 import {
@@ -59,7 +60,7 @@ export class WindowManager {
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#18181b' : '#ffffff',
       show: false, // Don't show until styles are ready
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: join(__dirname, 'preload.js'),
         nodeIntegration: false,
         contextIsolation: true,
       },
@@ -80,7 +81,7 @@ export class WindowManager {
       });
       this.dashboardWindow.webContents.openDevTools();
     } else {
-      const indexPath = path.join(__dirname, '../renderer/index.html');
+      const indexPath = join(__dirname, '../renderer/index.html');
       await this.dashboardWindow.loadFile(indexPath).catch((err) => {
         console.error(`[WindowManager] Failed to load index file: ${err.message}`);
       });
@@ -163,7 +164,7 @@ export class WindowManager {
       hasShadow: false,
       resizable: true,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: join(__dirname, 'preload.js'),
         nodeIntegration: false,
         contextIsolation: true,
       },
@@ -187,7 +188,7 @@ export class WindowManager {
     const isDev = !app.isPackaged;
     const loadPromise = isDev
       ? this.hudWindow.loadURL(DEV_HUD_URL)
-      : this.hudWindow.loadFile(path.join(__dirname, '../renderer/index.html'), { hash: '/hud' });
+      : this.hudWindow.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/hud' });
 
     await loadPromise.catch((err) => console.error('[WindowManager] Failed to load HUD:', err));
 

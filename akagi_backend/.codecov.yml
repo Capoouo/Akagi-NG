@@ -4,7 +4,7 @@
 coverage:
   precision: 2
   round: down
-  range: "70...100"
+  range: 70...100
 
   status:
     project:
@@ -22,7 +22,7 @@ coverage:
         informational: false
 
 comment:
-  layout: "diff,flags,files,footer"
+  layout: diff,flags,files,footer
   behavior: default
   require_changes: false
   require_base: false
@@ -31,15 +31,15 @@ comment:
   after_n_builds: 1
 
 ignore:
-  - "scripts/"
-  - "tests/"
-  - "**/test_*.py"
-  - "**/__init__.py"
-  - "**/__main__.py"
-  - ".venv/"
-  - "*.egg-info/"
-  - "build/"
-  - "dist/"
+  - 'scripts/'
+  - 'tests/'
+  - '**/test_*.py'
+  - '**/__init__.py'
+  - '**/__main__.py'
+  - '.venv/'
+  - '*.egg-info/'
+  - 'build/'
+  - 'dist/'
 
 github_checks:
   annotations: true

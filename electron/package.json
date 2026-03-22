@@ -3,48 +3,32 @@
   "private": true,
   "version": "1.0.6",
   "description": "Akagi-NG Electron Desktop App",
-  "main": "../dist/main/main.js",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Xe-Persistent/Akagi-NG.git"
-  },
-  "scripts": {
-    "dev": "concurrently -k \"npm:dev:frontend\" \"npm:dev:electron\"",
-    "dev:mock": "concurrently -k \"npm:dev:frontend\" \"npm:dev:electron:mock\"",
-    "dev:frontend": "cd ../akagi_frontend && npm run dev",
-    "dev:electron": "wait-on http://localhost:5173 && tsc -p tsconfig.json && electron .",
-    "dev:electron:mock": "wait-on http://localhost:5173 && tsc -p tsconfig.json && set AKAGI_MOCK_MODE=1&& electron .",
-    "clean": "tsx scripts/clean.ts",
-    "sync-version": "tsx scripts/sync_version.ts",
-    "prepare-release": "tsx scripts/prepare_release.ts",
-    "build": "npm run clean && npm run sync-version && npm run build:frontend && npm run build:backend && npm run build:electron && npm run prepare-release && electron-builder --publish never",
-    "build:frontend": "cd ../akagi_frontend && npm run build",
-    "build:backend": "tsx scripts/build_backend.ts",
-    "build:electron": "tsc -p tsconfig.json",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
-  },
-  "keywords": [],
   "author": "Akagi-NG Contributors",
   "license": "AGPL-3.0",
+  "main": "../dist/main/main.js",
+  "scripts": {
+    "dev": "wait-on http://localhost:5173 && tsc -p tsconfig.json && electron .",
+    "dev:mock": "wait-on http://localhost:5173 && tsc -p tsconfig.json && electron . --mock",
+    "build": "tsc -p tsconfig.json",
+    "package": "electron-builder --publish never"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  },
   "devDependencies": {
-    "concurrently": "^9.2.1",
     "electron": "40.8.2",
     "electron-builder": "^26.8.1",
-    "eslint": "^9.39.4",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-simple-import-sort": "^12.1.1",
-    "eslint-plugin-unused-imports": "^4.4.1",
-    "globals": "^17.4.0",
-    "prettier": "^3.8.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1",
     "wait-on": "^9.0.4"
   },
   "build": {
     "appId": "me.akagi.ng",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Xe-Persistent",
+        "repo": "Akagi-NG"
+      }
+    ],
     "artifactName": "Akagi-NG-${version}-${os}-${arch}.${ext}",
     "productName": "Akagi-NG",
     "icon": "../assets/torii.ico",
@@ -107,7 +91,7 @@
       "icon": "../assets/torii.icns",
       "category": "public.app-category.games",
       "binaries": [
-        "Contents/bin/python/bin/python3"
+        "Contents/bin/python/bin/akagi-ng"
       ]
     },
     "linux": {

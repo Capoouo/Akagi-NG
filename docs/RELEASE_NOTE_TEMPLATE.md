@@ -1,5 +1,3 @@
-# Release Notes - [vX.Y.Z]
-
 ## 简体中文 (Simplified Chinese)
 
 ### ✨ 新功能
@@ -13,6 +11,11 @@
 -
 
 ### 🎨 UI/UX 增强
+
+-
+-
+
+### 📝 文档更新
 
 -
 -
@@ -49,8 +52,7 @@
 
 ### 📢 重要通知
 
--
-- ***
+---
 
 ## English
 
@@ -64,12 +66,22 @@
 -
 -
 
+### 🎨 UI/UX Enhancements
+
+-
+-
+
+### 📝 Documentation
+
+-
+-
+
 ### ⚡ Improvements & Refinements
 
 -
 -
 
-### 🎨 UI/UX Enhancements
+### 🛠️ Maintenance & Refactoring
 
 -
 -
@@ -80,11 +92,6 @@
 -
 
 ### 🧪 Testing & Quality
-
--
--
-
-### 🛠️ Maintenance & Refactoring
 
 -
 -
@@ -101,7 +108,6 @@
 
 ### 📢 Important Notices
 
--
-- ***
+---
 
-  **Full Changelog**: [v0.x.x...vX.Y.Z](https://github.com/Xe-Persistent/Akagi-NG/compare/v0.x.x...vX.Y.Z)
+**Full Changelog**: https://github.com/Xe-Persistent/Akagi-NG/compare/v0.x.x...vX.Y.Z

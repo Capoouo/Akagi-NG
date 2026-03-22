@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version tag (e.g., x.y.z)"
+        description: Version tag (e.g., x.y.z)
         required: false
-        default: "dev"
+        default: dev
       skip_tests:
-        description: "Skip test suite"
+        description: Skip test suite
         required: false
         default: false
         type: boolean
@@ -43,18 +43,16 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: 3.12
+          cache: pip
           cache-dependency-path: akagi_backend/pyproject.toml
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: |
-            akagi_frontend/package-lock.json
-            electron/package-lock.json
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Cache Python virtual environment
         uses: actions/cache@v5
@@ -76,12 +74,9 @@ jobs:
           pip install -e .
 
       - name: Install JS dependencies
-        run: |
-          cd akagi_frontend && npm ci
-          cd ../electron && npm ci
+        run: npm ci
 
       - name: Build Electron App
-        working-directory: electron
         run: npm run build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

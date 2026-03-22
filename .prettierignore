@@ -1,0 +1,15 @@
+assets/
+build/
+coverage/
+dist/
+htmlcov/
+logs/
+node_modules/
+public/
+tmp/
+.env
+.env.*
+.venv/
+__pycache__/
+*.pth
+package-lock.json

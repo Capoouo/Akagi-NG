@@ -13,6 +13,10 @@
 <a href="https://github.com/Xe-Persistent/Akagi-NG/releases"><img src="https://img.shields.io/github/v/release/Xe-Persistent/Akagi-NG?labelColor=181717&logo=github&display_name=tag" alt="GitHub release"></a>
 <a href="https://github.com/Xe-Persistent/Akagi-NG/stargazers"><img src="https://img.shields.io/github/stars/Xe-Persistent/Akagi-NG?style=social" alt="GitHub stars"></a>
 <br>
+<img src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" alt="Windows">
+<img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" alt="macOS">
+<img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" alt="Linux">
+<br>
 <img src="https://img.shields.io/badge/Electron-47848F?logo=electron&logoColor=white" alt="Electron">
 <img src="https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB" alt="React">
 <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
@@ -45,109 +49,6 @@ Core Philosophy of Akagi-NG:
 - **Decoupled Design**: Complete separation of core logic, user interface, configuration management, and AI models
 - **High-Performance Inference**: Integrated `libriichi` for blazing fast Mortal model inference capabilities
 - **Long-term Maintainability**: Optimized code structure for continuous iteration
-
----
-
-## Core Architecture
-
-The graph below is the overall data flow of Akagi-NG in Electron desktop / MITM modes.
-
-**Components:**
-
-- **Dual-Mode Interceptor**: Provides two methods for game data acquisition
-  - **Desktop Mode**: Intercepts game communication via built-in Chromium browser + resource hooks, no proxy/certificate configuration needed
-  - **MITM Mode**: Intercepts traffic from external browsers/clients via mitmproxy, supports third-party devices
-
-- **Python Backend (DataServer)**: Core data processing hub
-  - **Protocol Bridge**: Converts Mahjong Soul protocol to MJAI standard format
-  - **State Tracker Bot**: Maintains complete game state machine
-  - **AI Controller**: Manages AI model and Lookahead algorithm, provides decision recommendations
-  - **SSE Event Stream**: Pushes AI decisions to frontend in real-time via Server-Sent Events
-
-- **Electron Frontend**: User interface and window management
-  - **Main Process**: Manages backend process and coordinates multiple windows
-  - **Dashboard**: Provides configuration management and game launch entry
-  - **HUD Overlay**: Transparent overlay window displaying AI recommendations in real-time
-
-- **Game Window**: Final game presentation layer
-  - In Desktop Mode: Chromium instance managed by Electron
-  - In MITM Mode: User's own browser or game client
-
-**Data Flow:**
-
-1. Game Server → Interceptor: Raw game data transmitted via WebSocket
-2. Interceptor → Python Backend: Converted to MJAI event format
-3. Python Backend Processing: State tracking + AI decision computation
-4. Python Backend → Electron: Pushes decision results via SSE
-5. HUD Overlay: Displays AI suggestions overlaid on game window
-
-```mermaid
-graph TB
-    %% Game Server
-    GS["Game Server<br/>"]
-
-    %% Dual Mode Entry
-    subgraph Modes ["Dual-Mode Interceptor"]
-        direction LR
-        DesktopMode["Desktop Mode<br/>Built-in Chromium + Hook"]
-        MitmMode["MITM Mode<br/>mitm-proxy"]
-    end
-
-    %% Python Backend Core
-    subgraph Backend ["Python Backend"]
-        direction TB
-        Bridge["Protocol Bridge<br/>(MJAI Adapter)"]
-        Bot["State Tracker Bot<br/>(Game State)"]
-        Controller["AI Controller<br/>(Mortal + Lookahead)"]
-        SSE["SSE Event Stream<br/>(Real-time Push)"]
-
-        Bridge --> Bot
-        Bridge --> Controller
-        Bot --> SSE
-        Controller --> SSE
-    end
-
-    %% Electron Frontend
-    subgraph Frontend ["Electron Frontend"]
-        direction TB
-        MainProcess["Main Process<br/>(Backend Manager + Window Manager)"]
-        Dashboard["Dashboard<br/>(React UI)"]
-        HUD["HUD Overlay<br/>(Transparent Layer)"]
-
-        MainProcess -- "Window Management" --> Dashboard
-        MainProcess -- "Window Management" --> HUD
-    end
-
-    %% Game Window
-    GameWin["Game Window<br/>(Chromium Instance or Client)"]
-
-    %% Data Flow
-    GS <-- "Game Data" --> DesktopMode
-    GS <-- "Game Data" --> MitmMode
-
-    DesktopMode -- "MJAI Events" --> Bridge
-    MitmMode -- "MJAI Events" --> Bridge
-
-    SSE -- "SSE Connection" --> Dashboard
-    SSE -- "AI Decisions" --> HUD
-
-    Dashboard -- "IPC" --> MainProcess
-    MainProcess -- "Window Management (Desktop Mode Only)" --> GameWin
-    HUD -- "Visual Overlay" --> GameWin
-
-    %% Styling
-    classDef serverStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef modeStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef backendStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef frontendStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    classDef gameStyle fill:#fff3e0,stroke:#ef6c00,stroke-width:3px
-
-    class GS serverStyle
-    class DesktopMode,MitmMode modeStyle
-    class Bridge,Bot,Controller,SSE backendStyle
-    class MainProcess,Dashboard,HUD frontendStyle
-    class GameWin gameStyle
-```
 
 ---
 
@@ -224,12 +125,14 @@ https://github.com/user-attachments/assets/b15d1f76-3009-448d-9648-0d2ffd4f3b7e
 
 ## ⚠️ Disclaimer
 
-This project is for **educational and research purposes only**.
-
-Using third-party auxiliary tools in online games may violate the game's Terms of Service.
-The authors and contributors of Akagi-NG are **NOT responsible for any consequences**, including but not limited to **account bans or suspensions**.
-
-Please fully understand and assume the relevant risks before use.
+> [!CAUTION]
+>
+> This project is for **educational and research purposes only**.
+>
+> Using third-party auxiliary tools in online games may violate the game's Terms of Service.
+> The authors and contributors of Akagi-NG are **NOT responsible for any consequences**, including but not limited to **account bans or suspensions**.
+>
+> Please fully understand and assume the relevant risks before use.
 
 ---
 
@@ -237,40 +140,39 @@ Please fully understand and assume the relevant risks before use.
 
 ### 1. Quick Start
 
-1. **Download**: Go to [Releases](../../releases) and download the latest version, then extract it.
-2. **Deploy**: Place AI model weight files (`.pth`) in the `models/` directory, and binary extensions (`.pyd`/`.so`) in the `lib/` directory.
-3. **Run**: Double-click `Akagi-NG.exe`.
-4. **Play**: Click "**Launch Game**" in the Dashboard and click the monitor icon at the top right to enable **HUD**.
+1. **Download**: Go to [Releases](../../releases) and download the latest version for your platform, then install or extract it.
+2. **Run**: Double-click `Akagi-NG`.
+3. **Play**: Click "**Launch Game**" in the Dashboard and click the monitor icon at the top right to enable **HUD**.
 
 ---
 
 ### 2. Directory Structure
 
-To ensure the program runs correctly, please verify the directory structure where `Akagi-NG.exe` is located:
+To ensure the program runs correctly, please verify the directory structure where `Akagi-NG` is located:
 
 ```plain
 Akagi-NG/
-  ├── Akagi-NG.exe     # Main Application (Electron Desktop)
-  ├── assets/          # Platform-specific UI assets
-  ├── bin/             # Backend core executable directory
-  ├── config/          # Configuration directory (settings.json)
-  ├── lib/             # libriichi binary extensions (.pyd/.so)
-  │     ├── libriichi.pyd
-  │     └── libriichi3p.pyd
-  ├── locales/         # Localization resource files
-  ├── logs/            # Runtime log directory
-  ├── models/          # AI model weight files (.pth)
-  │     ├── mortal.pth
-  │     └── mortal3p.pth
-  ├── resources/       # Electron core resources (app.asar)
-  ├── LICENSE.txt      # Open source license
-  ├── README.txt       # Quick start plain text guide
-  └── ...              # Other runtime files (.dll, .pak, etc.)
+  ├── Akagi-NG     # Main Application (Electron Desktop)
+  ├── assets/      # Platform-specific UI assets
+  ├── bin/         # Backend core executable directory
+  ├── config/      # Configuration directory (settings.json)
+  ├── lib/         # libriichi binary extensions (.pyd/.so)
+  │     ├── libriichi
+  │     └── libriichi3p
+  ├── locales/     # Localization resource files
+  ├── logs/        # Runtime log directory
+  ├── models/      # AI model weight files (.pth)
+  │     ├── mortal
+  │     └── mortal3p
+  ├── resources/   # Electron core resources (app.asar)
+  ├── LICENSE      # Open source license
+  ├── README       # Quick start plain text guide
+  └── ...          # Other runtime files (.dll, .pak, etc.)
 ```
 
 ### 3. Play & Exit
 
-When running `Akagi-NG.exe` for the first time, the integrated dashboard will appear. You can start the game directly from the dashboard to launch a dedicated browser window. Click the monitor icon in the top right of the dashboard to open the HUD overlay.
+When running `Akagi-NG` for the first time, the integrated dashboard will appear. You can start the game directly from the dashboard to launch a dedicated browser window. Click the monitor icon in the top right of the dashboard to open the HUD overlay.
 
 To exit the program, click the red power icon in the dashboard.
 
@@ -293,7 +195,7 @@ In this mode, Akagi-NG leverages its Electron core to manage a specialized Chrom
   - **Safe and Stable**: Receives data from the game server directly.
 
 - **Usage**:
-  1. Run `Akagi-NG.exe`.
+  1. Run `Akagi-NG`.
   2. Click "Launch Game" in the dashboard.
 
 ### 6. MITM Mode
@@ -303,8 +205,13 @@ Akagi-NG supports intercepting game data via Man-in-the-Middle (MITM) attack. Th
 1. **Enable Configuration**:
    Switch on "External Proxy" in the configuration panel or modify the `mitm` field in `config/settings.json`:
 
-   ```yaml
-   "mitm": { "enabled": true, "host": "127.0.0.1", "port": 6789 }
+   ```json
+   "mitm": {
+        "enabled": true,
+        "host": "127.0.0.1",
+        "port": 6789,
+        "upstream": ""
+    }
    ```
 
 2. **Set Proxy**:
@@ -312,7 +219,7 @@ Akagi-NG supports intercepting game data via Man-in-the-Middle (MITM) attack. Th
 
 3. **Install Certificate**:
 
-   > Note: If you use Scheme B (Clash splitting), you may be unable to open `mitm.it`. **Method 2** is recommended.
+   > Note: If you use Scheme B (Clash Rules Proxy), you may be unable to open `mitm.it`. **Method 2** is recommended.
    - **Method 1: Online Installation (Recommended for Scheme A Users)**
      - Start Akagi-NG.
      - Visit [http://mitm.it](http://mitm.it).
@@ -341,7 +248,7 @@ Akagi-NG supports intercepting game data via Man-in-the-Middle (MITM) attack. Th
 **Q: I am using proxy software like Clash/v2rayN (TUN/System Proxy mode), how should I configure it?**
 
 <details>
-<summary><b>Click to view detailed proxy split configuration schemes</b></summary>
+<summary><b>Click to view detailed proxy configuration method</b></summary>
 
 #### Configuration Scheme A: Browser Web Version (SwitchyOmega Proxy)
 
@@ -354,48 +261,45 @@ This scheme is suitable for **Web version** players, configuration is simplest a
    - Ensure Akagi-NG is started and `mitm.enabled` is `true` (default port 6789).
 
 2. **Install SwitchyOmega**:
-   - Chrome/Edge users please search regarding "SwitchyOmega" in the store and install it.
+   - Search **SwitchyOmega** in the browser extension store and install it.
 
 3. **Configure Profile**:
    - Open SwitchyOmega settings interface.
-   - Click **"New Profile"** on the left -> Name it `Akagi-Mitm` -> Select type **"Proxy Profile"**.
+   - Click **New Profile** on the left -> Name it `Akagi-Mitm` -> Select type **Proxy Profile**.
    - In `Akagi-Mitm` settings:
      - Protocol: `HTTP`
      - Server: `127.0.0.1`
      - Port: `6789`
-   - Click **"Apply Changes"** on the left to save.
+   - Click **Apply Changes** on the left to save.
 
 4. **Configure Auto Switch (Critical)**:
-   - Click **"Auto Switch"** on the left.
+   - Click **Auto Switch** on the left.
    - Delete all existing rules (if any).
    - **Add Rules**:
      - Rule condition: `*.maj-soul.com  ->  Akagi-Mitm`
      - Rule condition: `*.majsoul.com  ->  Akagi-Mitm`
      - Rule condition: `*.mahjongsoul.com  ->  Akagi-Mitm`
    - **Default Rule**:
-     - Select **"Direct"**, then click **"Apply Changes"** to save.
+     - Select **Direct**, then click **Apply Changes** to save.
 
-> [!TIP]
 > Because your system has Tun mode enabled, "Direct" traffic will be automatically taken over and proxied by the Tun network card, so you don't need to select "System Proxy" or "Clash" here.
-
-> [!IMPORTANT]
+>
 > If you don't enable Tun mode and only enabled System Proxy, please select "System Proxy" here.
 
 5. **Start Game**:
-   - Click the SwitchyOmega icon in the upper right corner of the browser and select **"Auto Switch"**.
+   - Click the SwitchyOmega icon in the upper right corner of the browser and select **Auto Switch**.
    - Visit Mahjong Soul web version, Akagi-NG should be able to capture game events normally, while you can still access Google/YouTube (via Tun).
 
-#### Configuration Scheme B: Mahjong Soul Client (Clash Rule Splitting)
+#### Configuration Scheme B: Mahjong Soul Client (Clash Rules Proxy, Windows Example)
 
-This scheme is suitable for **PC/Steam Client** players. Since the client cannot use plugins for splitting like a browser, we need to directly modify the Clash configuration to forward game traffic to Akagi-NG.
+This scheme is suitable for **PC/Steam Client** players. Since the client cannot use plugins to proxy like a browser, we need to directly modify the Clash configuration to forward game traffic to Akagi-NG.
 
-> [!IMPORTANT]
 > When playing with the PC/Steam client, please ensure Clash is in TUN mode, otherwise it will not be able to proxy client traffic.
 
 1. **Find Configuration Entry**:
-   - Find your configuration file in Clash Verge (or use "Merge" / "Script" function to inject, to avoid overwriting the original configuration).
+   - Find your configuration file in Clash Verge (or use **Merge** / **Script** function to inject, to avoid overwriting the original configuration).
 
-2. **Add Proxy Node (Proxies)**:
+2. **Add Proxy Node**:
    Define a node pointing to the Akagi-NG local proxy.
 
    ```yaml
@@ -418,7 +322,7 @@ This scheme is suitable for **PC/Steam Client** players. Since the client cannot
        type: select
    ```
 
-3. **Add Splitting Rules (Rules)**:
+3. **Add Proxy Rules**:
    Force Mahjong Soul related domains to point to the node defined above. Please note the rule order, it is recommended to place them near the top.
 
    ```yaml
@@ -462,52 +366,66 @@ The integrated build system expects a virtual environment in the `akagi_backend`
 ```bash
 cd akagi_backend
 python -m venv .venv
+
 # Windows
 .\.venv\Scripts\activate
+
 # Linux/macOS
 source .venv/bin/activate
 
-pip install -e .
+pip install -e ".[dev]"
 cd ..
 ```
 
-#### Frontend & Desktop Setup
+Prepare libriichi binary extensions:
 
 ```bash
-# Install frontend dependencies
-cd akagi_frontend
-npm install
+# Windows
+copy lib\libriichi-3.12-x86_64-pc-windows-msvc.pyd lib\libriichi.pyd
+copy lib\libriichi3p-3.12-x86_64-pc-windows-msvc.pyd lib\libriichi3p.pyd
 
-# Install electron desktop dependencies
-cd ../electron
+# macOS
+cp lib/libriichi-3.12-aarch64-apple-darwin.so lib/libriichi.so
+cp lib/libriichi3p-3.12-aarch64-apple-darwin.so lib/libriichi3p.so
+
+# Linux
+cp lib/libriichi-3.12-x86_64-unknown-linux-gnu.so lib/libriichi.so
+cp lib/libriichi3p-3.12-x86_64-unknown-linux-gnu.so lib/libriichi3p.so
+```
+
+#### Frontend & Electron Setup
+
+In the project root, run install:
+
+```bash
 npm install
 ```
 
 ### 2. Running in Development
 
-To launch the integrated development environment:
+Launch the integrated development environment:
 
 ```bash
-cd electron
 npm run dev
 ```
 
 ### 3. Building for Production
 
-To package the application for your current platform:
+Clean, sync versions, compile, and package the entire application:
 
 ```bash
-cd electron
 npm run build
 ```
 
 The build artifacts will be generated in the `dist/release` directory.
 
-> [!IMPORTANT]
-> The build process packages the application core. You still need to ensure that AI model weight files (`.pth`) are placed in the `models/` directory and binary extensions (`.pyd`/`.so`) are in the `lib/` directory of the release folder for the program to function.
-
 ---
 
 ## Open Source License
 
-This software follows the [GNU Affero General Public License version 3 (AGPLv3)](LICENSE) open source protocol.
+The core source code of this software follows the [GNU Affero General Public License version 3 (AGPLv3)](LICENSE) open source protocol.
+
+## Acknowledgements & Third-Party Resources
+
+The `lib` (containing `libriichi` binary extensions) and `models` (AI weight files) bundled in the releases of this project are sourced directly from the project [shinkuan/Akagi](https://github.com/shinkuan/Akagi).
+These compiled binaries and model weights are the property of their original authors and are distributed under their respective open-source licenses. We extend our greatest gratitude to the original authors for their incredible work.
