@@ -154,6 +154,9 @@ class StateTracker(StateTrackerProtocol):
         """提取消耗牌，优先消耗赤宝牌"""
         consumed = []
         hand = self.tehai_mjai_with_aka
+        tsumo = self.last_self_tsumo
+        if tsumo:
+            hand.append(tsumo)
 
         for base in target_bases:
             pure_base = base.replace("r", "")
@@ -197,26 +200,26 @@ class StateTracker(StateTrackerProtocol):
             return [{"tile": last_kawa, "consumed": []}]
 
         base = last_kawa.replace("r", "")
-        consumed = self._extract_consumed([base, base])
+        consumed = self._extract_consumed([base] * 2)
         return [{"tile": last_kawa, "consumed": consumed}]
 
     def _handle_kan_fuuro(self, last_kawa: str | None) -> list[FuuroDetail]:
         results: list[FuuroDetail] = []
         if last_kawa and self.player_state.last_cans.can_daiminkan:
             base = last_kawa.replace("r", "")
-            consumed = self._extract_consumed([base, base, base])
+            consumed = self._extract_consumed([base] * 3)
             results.append({"tile": last_kawa, "consumed": consumed})
             return results
 
         for cand in self.player_state.ankan_candidates():
             base = cand.replace("r", "")
-            consumed = self._extract_consumed([base, base, base, base])
-            results.append({"tile": consumed[0] if consumed else "?", "consumed": consumed})
+            consumed = self._extract_consumed([base] * 4)
+            results.append({"tile": f"{base}r" if f"{base}r" in consumed else base, "consumed": consumed})
 
         for cand in self.player_state.kakan_candidates():
             base = cand.replace("r", "")
             consumed = self._extract_consumed([base])
-            results.append({"tile": consumed[0] if consumed else "?", "consumed": consumed})
+            results.append({"tile": consumed[0], "consumed": consumed})
         return results
 
     def _get_fuuro_details(self, action: FuuroAction) -> list[FuuroDetail]:

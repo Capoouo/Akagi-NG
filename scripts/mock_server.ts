@@ -210,7 +210,7 @@ function generateMockData(counter: number): FullRecommendationData {
     {
       tehai: ['4m', '4m', '4m', '4m', '5m', '6m', '7m', 'E', 'E', 'E', '7s'], // has a 7s, 7s, 7s from Pon
       recommendations: [
-        { action: 'kan', confidence: 0.9, tile: '4m', consumed: ['4m', '4m', '4m', '4m'] }, // Ankan (consumes 4 from hand)
+        { action: 'kan', confidence: 0.9, tile: '5m', consumed: ['5m', '5mr', '5m', '5m'] }, // Ankan (consumes 4 from hand)
         { action: 'kan', confidence: 0.9, tile: '7s', consumed: ['7s'] }, // Kakan (consumes 1 from hand)
         { action: '7s', confidence: 0.1 }, // Skip kan
       ],

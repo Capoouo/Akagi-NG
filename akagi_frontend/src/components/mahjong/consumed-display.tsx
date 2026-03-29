@@ -13,17 +13,28 @@ interface ConsumedDisplayProps {
 
 export const ConsumedDisplay: FC<ConsumedDisplayProps> = memo(({ action, consumed, tile }) => {
   const isNaki = action === 'chi' || action === 'pon' || action === 'kan';
-
-  // 暗杠检测：action === 'kan 且 4 张牌
   const isAnkan = action === 'kan' && consumed.length === 4;
+  const isKakan = action === 'kan' && consumed.length === 1;
 
-  // 排序逻辑
+  // 排序及视觉规约对齐逻辑
   const handTiles = useMemo(() => {
-    if (!consumed || consumed.length === 0) return [];
+    if (!consumed.length) return [];
     if (!isNaki) return consumed;
 
-    return sortTiles(consumed);
-  }, [consumed, isNaki]);
+    const sorted = sortTiles(consumed);
+    const aka = sorted.find((t) => t.endsWith('r'));
+
+    // 针对不同鸣牌类型的赤宝牌固定位置规约
+    if (aka) {
+      const rest = sorted.filter((t) => t !== aka);
+      // 暗杠：插入至左数第二张
+      if (isAnkan) return [rest[0], aka, rest[1], rest[2]];
+      // 碰、大明杠、加杠：置于首位
+      if (action === 'pon' || action === 'kan') return [aka, ...rest];
+    }
+
+    return sorted;
+  }, [action, consumed, isAnkan, isNaki]);
 
   if (!isNaki) {
     return (
@@ -36,25 +47,27 @@ export const ConsumedDisplay: FC<ConsumedDisplayProps> = memo(({ action, consume
   }
 
   return (
-    <div className='flex items-center gap-6 rounded-xl border border-white/30 bg-white/20 px-5 py-4 shadow-sm dark:border-white/10 dark:bg-black/20'>
-      {/* The tile called (Last Kawa or kan identifier) */}
-      <div className='relative'>
-        <MahjongTile tile={tile ?? '?'} />
-      </div>
+    <>
+      {/* 要鸣的牌（一般是牌河的最后一张） */}
+      <MahjongTile tile={tile!} />
 
-      {/* Connector Icon */}
+      {/* 箭头 */}
       <div className='text-zinc-400 dark:text-zinc-500'>
         <ArrowRight size={32} />
       </div>
 
-      {/* Tiles in hand: if Ankan, show back for 1st and 4th */}
       <div className='flex gap-1'>
-        {handTiles.map((t, i) => {
-          const showBack = isAnkan && (i === 0 || i === 3);
-          return <MahjongTile key={i} tile={t} isBack={showBack} />;
-        })}
+        {/* 构成副露的牌 */}
+        {handTiles.map((t, i) => (
+          <MahjongTile key={`hand-${i}`} tile={t} isBack={isAnkan && (i === 0 || i === 3)} />
+        ))}
+        {/* 加杠时展示之前碰的牌 */}
+        {isKakan &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <MahjongTile key={`ghost-${i}`} tile={tile!.replace('r', '')} isGhost />
+          ))}
       </div>
-    </div>
+    </>
   );
 });
 
