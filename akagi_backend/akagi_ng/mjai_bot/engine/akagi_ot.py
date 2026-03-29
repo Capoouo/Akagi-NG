@@ -100,7 +100,6 @@ class AkagiOTEngine(BaseEngine):
 
         self.is_online = True
         self.engine_type = "akagiot"
-        self.enable_rule_based_agari_guard = False
 
     def fork(self, status: BotStatusContext | None = None) -> Self:
         """创建共享 Client 但状态独立的副本"""
