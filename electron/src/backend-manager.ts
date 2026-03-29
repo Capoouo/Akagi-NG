@@ -17,7 +17,14 @@ interface AppSettings {
   };
 }
 
-import { BACKEND_SHUTDOWN_API_TIMEOUT_MS, BACKEND_SHUTDOWN_TIMEOUT_MS } from './constants';
+import {
+  BACKEND_READY_TIMEOUT_MS,
+  BACKEND_SHUTDOWN_API_TIMEOUT_MS,
+  BACKEND_SHUTDOWN_TIMEOUT_MS,
+  BACKEND_STARTUP_CHECK_INTERVAL_MS,
+  BACKEND_STARTUP_CHECK_RETRIES,
+  BACKEND_STARTUP_CHECK_TIMEOUT_MS,
+} from './constants';
 import type { ResourceStatus } from './resource-validator';
 import { ResourceValidator } from './resource-validator';
 import { getAssetPath, getProjectRoot } from './utils';
@@ -31,58 +38,39 @@ export class BackendManager {
   private rejectReady!: (reason?: Error) => void;
   private isMockMode: boolean = false;
 
+  private async getSettings(): Promise<AppSettings> {
+    try {
+      const settingsPath = getAssetPath('config', 'settings.json');
+      const fileContent = await readFile(settingsPath, 'utf8');
+      return JSON.parse(fileContent) as AppSettings;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.warn(
+          '[BackendManager] Failed to read settings.json for config:',
+          err instanceof Error ? err.message : String(err),
+        );
+      }
+    }
+    return {};
+  }
+
   public async getBackendConfig(): Promise<{ host: string; port: number }> {
     if (process.argv.includes('--mock')) {
       return { host: '127.0.0.1', port: 8765 };
     }
-
-    const defaultHost = '127.0.0.1';
-    const defaultPort = 8765;
-
-    try {
-      const settingsPath = getAssetPath('config', 'settings.json');
-      const fileContent = await readFile(settingsPath, 'utf8');
-      const settings = JSON.parse(fileContent) as AppSettings;
-
-      return {
-        host: settings?.server?.host ?? defaultHost,
-        port: settings?.server?.port ?? defaultPort,
-      };
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.warn(
-          '[BackendManager] Failed to read settings.json for backend config:',
-          err instanceof Error ? err.message : String(err),
-        );
-      }
-    }
-
-    return { host: defaultHost, port: defaultPort };
+    const settings = await this.getSettings();
+    return {
+      host: settings.server?.host ?? '127.0.0.1',
+      port: settings.server?.port ?? 8765,
+    };
   }
 
   public async getMitmConfig(): Promise<{ host: string; port: number }> {
-    const defaultHost = '127.0.0.1';
-    const defaultPort = 6789;
-
-    try {
-      const settingsPath = getAssetPath('config', 'settings.json');
-      const fileContent = await readFile(settingsPath, 'utf8');
-      const settings = JSON.parse(fileContent) as AppSettings;
-
-      return {
-        host: settings?.mitm?.host ?? defaultHost,
-        port: settings?.mitm?.port ?? defaultPort,
-      };
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.warn(
-          '[BackendManager] Failed to read settings.json for mitm config:',
-          err instanceof Error ? err.message : String(err),
-        );
-      }
-    }
-
-    return { host: defaultHost, port: defaultPort };
+    const settings = await this.getSettings();
+    return {
+      host: settings.mitm?.host ?? '127.0.0.1',
+      port: settings.mitm?.port ?? 6789,
+    };
   }
 
   public isRunning(): boolean {
@@ -158,10 +146,12 @@ export class BackendManager {
     });
 
     this.setupListeners();
+    this.startHealthCheck();
   }
 
   private startMockBackend() {
     console.log('[BackendManager] Starting backend in MOCK mode...');
+    this.markReady();
   }
 
   private startProdBackend() {
@@ -190,10 +180,36 @@ export class BackendManager {
       });
 
       this.setupListeners();
+      this.startHealthCheck();
     } catch (e) {
       const msg = `Backend initialization failed: ${e instanceof Error ? e.message : String(e)}`;
       console.error(`[BackendManager] ${msg}`);
       dialog.showErrorBox('Startup Error', msg);
+    }
+  }
+
+  private async startHealthCheck() {
+    try {
+      for (let i = 0; i < BACKEND_STARTUP_CHECK_RETRIES; i++) {
+        if (!this.isRunning()) {
+          console.warn('[BackendManager] Backend process has stopped. Aborting readiness check.');
+          break;
+        }
+        try {
+          const { host, port } = await this.getBackendConfig();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), BACKEND_STARTUP_CHECK_TIMEOUT_MS);
+          await fetch(`http://${host}:${port}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          console.log(`[BackendManager] API port ${port} is ready to traffic.`);
+          this.markReady();
+          break;
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, BACKEND_STARTUP_CHECK_INTERVAL_MS));
+        }
+      }
+    } catch (err) {
+      console.warn('[BackendManager] Health check unexpected termination:', err);
     }
   }
 
@@ -223,7 +239,7 @@ export class BackendManager {
     });
   }
 
-  public markReady() {
+  private markReady() {
     if (!this.isReadyState) {
       this.isReadyState = true;
       this.resolveReady();
@@ -231,7 +247,7 @@ export class BackendManager {
     }
   }
 
-  public async waitForReady(timeoutMs: number = 20000): Promise<boolean> {
+  public async waitForReady(timeoutMs: number = BACKEND_READY_TIMEOUT_MS): Promise<boolean> {
     if (this.isReadyState) return true;
 
     const timeoutPromise = new Promise<boolean>((resolve) => {

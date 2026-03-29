@@ -1,7 +1,7 @@
 import 'react-toastify/dist/ReactToastify.css';
 
 import { lazy, Suspense, use, useEffect, useMemo, useState } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router';
 
 import { ConnectionProvider } from '@/components/ConnectionProvider';
 import { ExitOverlay } from '@/components/ExitOverlay';
@@ -21,7 +21,9 @@ const initApp = async () => {
   if (!window.electron) {
     throw new Error('Akagi-NG requires Electron environment to boot.');
   }
-  const { host, port } = await window.electron.invoke('wait-for-backend');
+  const { host, port } = await window.electron.invoke<{ host: string; port: number }>(
+    'wait-for-backend',
+  );
   const apiBase = `http://${host}:${port}`;
   setBaseUrl(apiBase);
   const settings = await fetchSettingsApi();

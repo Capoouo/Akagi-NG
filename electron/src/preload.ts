@@ -3,53 +3,18 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 type IpcCallback = (event: IpcRendererEvent, ...args: unknown[]) => void;
 
-const VALID_INVOKE_CHANNELS = [
-  'toggle-hud',
-  'start-game',
-  'request-shutdown',
-  'open-external',
-  'minimize-window',
-  'maximize-window',
-  'is-window-maximized',
-  'check-resource-status',
-  'get-app-version',
-  'wait-for-backend',
-  'update-locale',
-  'set-window-bounds',
-  'app:start-download',
-  'app:install-update',
-] as const;
-
-const VALID_ON_CHANNELS = [
-  'hud-visibility-changed',
-  'window-state-changed',
-  'exit-animation-start',
-  'locale-changed',
-  'app:update-available',
-  'app:update-progress',
-  'app:update-downloaded',
-] as const;
-
 contextBridge.exposeInMainWorld('electron', {
-  send: (channel: string, data?: unknown) => {
-    if ((VALID_INVOKE_CHANNELS as readonly string[]).includes(channel)) {
-      ipcRenderer.send(channel, data);
-    }
+  send: (channel: string, ...args: unknown[]) => {
+    ipcRenderer.send(channel, ...args);
   },
 
   on: (channel: string, func: (...args: unknown[]) => void) => {
-    if ((VALID_ON_CHANNELS as readonly string[]).includes(channel)) {
-      const subscription: IpcCallback = (_event, ...args) => func(...args);
-      ipcRenderer.on(channel, subscription);
-      return () => ipcRenderer.removeListener(channel, subscription);
-    }
-    return () => {};
+    const subscription: IpcCallback = (_event, ...args) => func(...args);
+    ipcRenderer.on(channel, subscription);
+    return () => ipcRenderer.removeListener(channel, subscription);
   },
 
-  invoke: (channel: string, data?: unknown) => {
-    if ((VALID_INVOKE_CHANNELS as readonly string[]).includes(channel)) {
-      return ipcRenderer.invoke(channel, data);
-    }
-    return Promise.reject(new Error(`Unauthorized IPC channel: ${channel}`));
+  invoke: (channel: string, ...args: unknown[]) => {
+    return ipcRenderer.invoke(channel, ...args);
   },
 });

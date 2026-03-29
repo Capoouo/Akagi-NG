@@ -1,4 +1,4 @@
-import { Github, Scale } from 'lucide-react';
+import { AppWindow, Scale } from 'lucide-react';
 import { type FC, memo } from 'react';
 
 import { AKAGI_VERSION } from '@/version';
@@ -37,8 +37,8 @@ export const Footer: FC = memo(() => {
           <div className='h-3 w-px bg-zinc-300 dark:bg-zinc-700' />
           <ExternalLink
             href='https://github.com/Xe-Persistent/Akagi-NG'
-            icon={<Github className='h-3.5 w-3.5' />}
-            text='GitHub'
+            icon={<AppWindow className='h-3.5 w-3.5' />}
+            text='Homepage'
           />
           <ExternalLink
             href='https://github.com/Xe-Persistent/Akagi-NG?tab=AGPL-3.0-1-ov-file'

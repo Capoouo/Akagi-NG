@@ -20,6 +20,7 @@ import {
   HUD_WINDOW_WIDTH,
 } from './constants';
 import { GameHandler } from './game-handler';
+import { isSafeWindow, safeSend } from './utils';
 
 export class WindowManager {
   private dashboardWindow: BrowserWindow | null = null;
@@ -58,7 +59,7 @@ export class WindowManager {
       titleBarStyle: 'hiddenInset',
       autoHideMenuBar: true,
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#18181b' : '#ffffff',
-      show: false, // Don't show until styles are ready
+      show: false,
       webPreferences: {
         preload: join(__dirname, 'preload.js'),
         nodeIntegration: false,
@@ -70,16 +71,15 @@ export class WindowManager {
       this.dashboardWindow?.show();
     });
 
-    const devUrl = DEV_SERVER_URL; // Vite dev server
-    // In production we would load a file
-
     const isDev = !app.isPackaged;
 
     if (isDev) {
-      await this.dashboardWindow.loadURL(devUrl).catch((err) => {
+      await this.dashboardWindow.loadURL(DEV_SERVER_URL).catch((err) => {
         console.error(`[WindowManager] Failed to load dev URL: ${err.message}`);
       });
-      this.dashboardWindow.webContents.openDevTools();
+      if (isSafeWindow(this.dashboardWindow)) {
+        this.dashboardWindow.webContents.openDevTools();
+      }
     } else {
       const indexPath = join(__dirname, '../renderer/index.html');
       await this.dashboardWindow.loadFile(indexPath).catch((err) => {
@@ -96,15 +96,11 @@ export class WindowManager {
     });
 
     this.dashboardWindow.on('maximize', () => {
-      if (!this.dashboardWindow?.isDestroyed() && this.dashboardWindow?.webContents) {
-        this.dashboardWindow.webContents.send('window-state-changed', true);
-      }
+      safeSend(this.dashboardWindow, 'window-state-changed', true);
     });
 
     this.dashboardWindow.on('unmaximize', () => {
-      if (!this.dashboardWindow?.isDestroyed() && this.dashboardWindow?.webContents) {
-        this.dashboardWindow.webContents.send('window-state-changed', false);
-      }
+      safeSend(this.dashboardWindow, 'window-state-changed', false);
     });
 
     // Preload HUD window so it is ready instantly
@@ -124,17 +120,17 @@ export class WindowManager {
           this.hudWindow.show();
           // Short delay to allow renderer to stabilize
           setTimeout(() => {
-            this.hudWindow?.setOpacity(1);
-          }, 100);
+            if (isSafeWindow(this.hudWindow)) {
+              this.hudWindow.setOpacity(1);
+            }
+          }, 50);
         }
         this.hudWindow.focus();
       }
     } else {
       if (this.hudWindow?.isVisible()) {
         this.hudWindow.hide();
-        if (!this.dashboardWindow?.isDestroyed() && this.dashboardWindow?.webContents) {
-          this.dashboardWindow.webContents.send('hud-visibility-changed', false);
-        }
+        safeSend(this.dashboardWindow, 'hud-visibility-changed', false);
       }
     }
   }
@@ -179,10 +175,12 @@ export class WindowManager {
     // Enforce 16:9 aspect ratio natively
     this.hudWindow.setAspectRatio(16 / 9);
 
-    // Wait for ready-to-show but DO NOT show immediately
-    // Just mark it as ready internally if needed, or rely on show() later
-    this.hudWindow.once('ready-to-show', () => {
-      // Do nothing, wait for toggle command
+    // Save position whenever user moves it
+    this.hudWindow.on('moved', () => {
+      if (isSafeWindow(this.hudWindow)) {
+        const [x, y] = this.hudWindow.getPosition();
+        this.lastHudPosition = { x, y };
+      }
     });
 
     const isDev = !app.isPackaged;
@@ -192,15 +190,12 @@ export class WindowManager {
 
     await loadPromise.catch((err) => console.error('[WindowManager] Failed to load HUD:', err));
 
-    // Prevent closing, just hide
     this.hudWindow.on('close', (e) => {
       // If the app is quitting, allow close. Otherwise, just hide.
       if (!this.isQuitting) {
         e.preventDefault();
         this.hudWindow?.hide();
-        if (!this.dashboardWindow?.isDestroyed() && this.dashboardWindow?.webContents) {
-          this.dashboardWindow.webContents.send('hud-visibility-changed', false);
-        }
+        safeSend(this.dashboardWindow, 'hud-visibility-changed', false);
       }
     });
 
@@ -216,18 +211,21 @@ export class WindowManager {
   }): Promise<void> {
     const { url, useMitm } = options;
 
-    if (this.gameWindow) {
-      if (!this.gameWindow.isDestroyed()) {
-        this.gameWindow.focus();
-      } else {
-        this.gameWindow = null; // Clean up zombie reference
-      }
+    if (isSafeWindow(this.gameWindow)) {
+      this.gameWindow.focus();
+      return;
+    }
+    this.gameWindow = null; // Clean up zombie reference and proceed with creation
+
+    if (!url) {
+      console.warn('[WindowManager] No URL provided for Game Window!');
       return;
     }
 
     this.gameWindow = new BrowserWindow({
       width: GAME_WINDOW_WIDTH,
       height: GAME_WINDOW_HEIGHT,
+      useContentSize: true,
       maximizable: true,
       autoHideMenuBar: true,
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#18181b' : '#ffffff',
@@ -235,6 +233,16 @@ export class WindowManager {
         nodeIntegration: false,
         contextIsolation: true,
       },
+    });
+
+    this.gameWindow.webContents.setWindowOpenHandler(() => {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          autoHideMenuBar: true,
+          backgroundColor: nativeTheme.shouldUseDarkColors ? '#18181b' : '#ffffff',
+        },
+      };
     });
 
     // Handle F11 for fullscreen toggle
@@ -247,12 +255,6 @@ export class WindowManager {
     });
 
     // Frontend should always provide a valid URL.
-    const targetUrl = url;
-    if (!targetUrl) {
-      console.warn('[WindowManager] No URL provided for Game Window!');
-      return;
-    }
-
     // Sanitize User Agent to remove Electron fingerprint
     const defaultUA = this.gameWindow.webContents.session.getUserAgent();
     // Remove "akagi-ng-desktop/1.0.0" and "Electron/x.y.z"
@@ -268,19 +270,14 @@ export class WindowManager {
       const proxyRules = `http://${mitm.host}:${mitm.port}`;
       console.log(`[WindowManager] Setting game window proxy to: ${proxyRules}`);
       await this.gameWindow.webContents.session.setProxy({
-        proxyRules: proxyRules,
+        proxyRules,
         proxyBypassRules: '127.0.0.1,localhost',
       });
     } else {
       // If NOT using MITM, attach GameHandler (Debugger API) for local interception
       // MUST attach before loading URL to capture early WebSocket traffic and avoid crash
       try {
-        if (
-          this.gameWindow &&
-          !this.gameWindow.isDestroyed() &&
-          this.gameWindow.webContents &&
-          !this.gameWindow.webContents.isDestroyed()
-        ) {
+        if (isSafeWindow(this.gameWindow) && !this.gameWindow.webContents.isDestroyed()) {
           const backend = await this.backendManager.getBackendConfig();
           const apiBase = `http://${backend.host}:${backend.port}`;
           this.gameHandler = new GameHandler(this.gameWindow.webContents, apiBase);
@@ -291,7 +288,7 @@ export class WindowManager {
       }
     }
 
-    if (this.gameWindow && !this.gameWindow.isDestroyed()) {
+    if (isSafeWindow(this.gameWindow)) {
       this.gameWindow.on('closed', () => {
         if (this.gameHandler) {
           this.gameHandler.detach();
@@ -302,21 +299,19 @@ export class WindowManager {
     }
 
     try {
-      await this.gameWindow.loadURL(targetUrl);
+      await this.gameWindow.loadURL(url);
     } catch (err) {
       const error = err as { code?: string; errno?: number; message?: string };
       // ERR_ABORTED can happen during redirects or if the navigation is cancelled by the page logic
       // but it doesn't always mean the load failed.
       if (error.code === 'ERR_ABORTED' || error.errno === -3) {
-        console.warn(
-          `[WindowManager] Navigation aborted for ${targetUrl}, attempting to proceed...`,
-        );
+        console.warn(`[WindowManager] Navigation aborted for ${url}, attempting to proceed...`);
       } else {
         console.error(
           `[WindowManager] Failed to load game URL: ${error.message ?? 'Unknown Error'}`,
         );
         // Clean up failed window immediately
-        if (this.gameWindow && !this.gameWindow.isDestroyed()) {
+        if (isSafeWindow(this.gameWindow)) {
           this.gameWindow.close();
         }
         this.gameWindow = null;

@@ -1,6 +1,8 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 
 import type { BackendManager } from './backend-manager';
+import { EXIT_ANIMATION_DELAY_MS } from './constants';
+import { isSafeWindow, safeSend } from './utils';
 import type { WindowManager } from './window-manager';
 
 export function registerIpcHandlers(windowManager: WindowManager, backendManager: BackendManager) {
@@ -22,11 +24,14 @@ export function registerIpcHandlers(windowManager: WindowManager, backendManager
   // Request App Shutdown
   ipcMain.handle('request-shutdown', async () => {
     // Notify all windows to start exit animation
-    windowManager.getMainWindow()?.webContents.send('exit-animation-start');
-    windowManager.getGameWindow()?.webContents.send('exit-animation-start');
+    safeSend(windowManager.getMainWindow(), 'exit-animation-start');
+    safeSend(windowManager.getGameWindow(), 'exit-animation-start');
 
-    // Wait for animation (1.5 seconds)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Run exit animation and backend shutdown in parallel
+    await Promise.all([
+      new Promise((resolve) => setTimeout(resolve, EXIT_ANIMATION_DELAY_MS)),
+      backendManager.stop().catch((err) => console.error('[IPC] Backend stop error:', err)),
+    ]);
 
     app.quit();
     return true;
@@ -50,30 +55,30 @@ export function registerIpcHandlers(windowManager: WindowManager, backendManager
 
   // Minimize Window
   ipcMain.handle('minimize-window', () => {
-    windowManager.getMainWindow()?.minimize();
+    const win = windowManager.getMainWindow();
+    if (isSafeWindow(win)) {
+      win.minimize();
+    }
     return true;
   });
 
   // Maximize / Restore Window
   ipcMain.handle('maximize-window', (_event, type?: 'dashboard' | 'game') => {
     const win = type === 'game' ? windowManager.getGameWindow() : windowManager.getMainWindow();
-    if (!win) return false;
-    if (win.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win.maximize();
+    if (isSafeWindow(win)) {
+      if (win.isMaximized()) {
+        win.unmaximize();
+      } else {
+        win.maximize();
+      }
     }
     return true;
   });
 
   // Check if window is maximized
   ipcMain.handle('is-window-maximized', () => {
-    return windowManager.getMainWindow()?.isMaximized() || false;
-  });
-
-  // Example: Get current app version
-  ipcMain.handle('get-app-version', () => {
-    return app.getVersion();
+    const win = windowManager.getMainWindow();
+    return isSafeWindow(win) ? win.isMaximized() : false;
   });
 
   // Check resource status (lib/models)
@@ -91,9 +96,7 @@ export function registerIpcHandlers(windowManager: WindowManager, backendManager
   // Sync locale across windows
   ipcMain.handle('update-locale', (_event, locale: string) => {
     BrowserWindow.getAllWindows().forEach((win) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('locale-changed', locale);
-      }
+      safeSend(win, 'locale-changed', locale);
     });
     return true;
   });
@@ -101,7 +104,7 @@ export function registerIpcHandlers(windowManager: WindowManager, backendManager
   // Set window bounds (x, y, width, height)
   ipcMain.handle('set-window-bounds', (_event, bounds: Partial<Electron.Rectangle>) => {
     const win = BrowserWindow.fromWebContents(_event.sender);
-    if (win && !win.isDestroyed()) {
+    if (isSafeWindow(win)) {
       win.setBounds(bounds);
     }
     return true;

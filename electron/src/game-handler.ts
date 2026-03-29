@@ -118,6 +118,9 @@ export class GameHandler {
       this.webContents.debugger.attach('1.3');
       this.attached = true;
 
+      this.webContents.debugger.removeAllListeners('detach');
+      this.webContents.debugger.removeAllListeners('message');
+
       this.webContents.debugger.on('detach', (_event, reason) => {
         console.warn('[GameHandler] Debugger detached:', reason);
         this.attached = false;
@@ -151,8 +154,14 @@ export class GameHandler {
 
   public detach() {
     if (this.attached) {
-      this.webContents.debugger.detach();
       this.attached = false;
+      if (!this.webContents.isDestroyed()) {
+        try {
+          this.webContents.debugger.detach();
+        } catch {
+          // Ignore detach errors if target is already closed
+        }
+      }
     }
   }
 
@@ -192,20 +201,11 @@ export class GameHandler {
     let data = '';
     let opcode = -1;
 
-    // Unified handling for both inbound and outbound frames
-    // CDP puts payloadData inside the 'response' object for both events
     if (response && response.payloadData) {
       data = response.payloadData;
       opcode = response.opcode ?? -1;
     } else {
-      // Fallback: Check if payloadData is at the top level (older CDP or different backend)
-      const p = params as unknown as Record<string, unknown>;
-      if (typeof p.payloadData === 'string') {
-        data = p.payloadData;
-        opcode = typeof p.opcode === 'number' ? p.opcode : 2;
-      } else {
-        return;
-      }
+      return;
     }
 
     const payload: BackendIngestPayload = {
