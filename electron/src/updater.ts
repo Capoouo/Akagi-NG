@@ -1,60 +1,51 @@
-import { app, ipcMain } from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { app, net } from 'electron';
 
+import { GITHUB_RELEASES_API } from './constants';
+import { safeSend } from './utils';
 import type { WindowManager } from './window-manager';
 
-export class UpdaterManager {
-  constructor(private windowManager: WindowManager) {
-    autoUpdater.autoDownload = false;
-    autoUpdater.autoInstallOnAppQuit = false;
+interface GitHubRelease {
+  tag_name: string;
+}
 
-    this.setupListeners();
-    this.setupIpcHandlers();
-  }
+export class UpdaterManager {
+  constructor(private windowManager: WindowManager) {}
 
   public checkForUpdates() {
     if (!app.isPackaged) {
-      console.log('[Updater] Running in dev mode, skipping auto-update check.');
+      console.log('[Updater] Running in dev mode, skipping update check.');
       return;
     }
 
-    autoUpdater.checkForUpdates().catch((err) => {
-      console.error('[Updater] Error checking for updates', err);
+    this.fetchLatestVersion().catch((err) => {
+      console.error('[Updater] Error checking for updates:', err);
     });
   }
 
-  private setupListeners() {
-    autoUpdater.on('update-available', (info) => {
-      this.notifyWindow('app:update-available', info.version);
+  private async fetchLatestVersion(): Promise<void> {
+    const response = await net.fetch(GITHUB_RELEASES_API, {
+      headers: { Accept: 'application/vnd.github.v3+json' },
     });
 
-    autoUpdater.on('download-progress', (progressObj) => {
-      this.notifyWindow('app:update-progress', progressObj);
-    });
+    if (!response.ok) {
+      console.warn(`[Updater] GitHub API returned ${response.status}`);
+      return;
+    }
 
-    autoUpdater.on('update-downloaded', () => {
-      this.notifyWindow('app:update-downloaded');
-    });
+    const data = (await response.json()) as GitHubRelease;
+    const latestVersion = data.tag_name.replace(/^v/, '');
+    const currentVersion = app.getVersion();
 
-    autoUpdater.on('error', (err) => {
-      console.error('[Updater] Error:', err);
-    });
-  }
-
-  private setupIpcHandlers() {
-    ipcMain.handle('app:start-download', async () => {
-      await autoUpdater.downloadUpdate();
-    });
-
-    ipcMain.handle('app:install-update', () => {
-      autoUpdater.quitAndInstall(false, true);
-    });
+    if (latestVersion !== currentVersion) {
+      console.log(`[Updater] Update available: v${currentVersion} → v${latestVersion}`);
+      this.notifyWindow('app:update-available', latestVersion);
+    } else {
+      console.log(`[Updater] Already on latest version: v${currentVersion}`);
+    }
   }
 
   private notifyWindow(channel: string, data?: unknown) {
     const mainWin = this.windowManager.getMainWindow();
-    if (mainWin && !mainWin.isDestroyed()) {
-      mainWin.webContents.send(channel, data);
-    }
+    safeSend(mainWin, channel, data);
   }
 }

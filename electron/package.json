@@ -12,9 +12,6 @@
     "build": "tsc -p tsconfig.json",
     "package": "electron-builder --publish never"
   },
-  "dependencies": {
-    "electron-updater": "^6.8.3"
-  },
   "devDependencies": {
     "electron": "40.8.2",
     "electron-builder": "^26.8.1",
