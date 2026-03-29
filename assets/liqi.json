@@ -1,7 +1,4 @@
 {
-  "options": {
-    "syntax": "proto3"
-  },
   "nested": {
     "lq": {
       "options": {
@@ -5480,6 +5477,10 @@
             "match_end_time": {
               "type": "uint32",
               "id": 25
+            },
+            "open_rank_percent": {
+              "type": "uint32",
+              "id": 26
             }
           }
         },
@@ -5535,6 +5536,10 @@
             "total_game_count": {
               "type": "uint32",
               "id": 5
+            },
+            "rank_percent": {
+              "type": "uint32",
+              "id": 6
             }
           }
         },
@@ -8778,6 +8783,54 @@
             }
           }
         },
+        "BannerActivityData": {
+          "fields": {
+            "activity_id": {
+              "type": "uint32",
+              "id": 1
+            },
+            "tag_img_url": {
+              "type": "string",
+              "id": 2
+            },
+            "banner_background_url": {
+              "type": "string",
+              "id": 3
+            },
+            "banner_button_url": {
+              "type": "string",
+              "id": 4
+            },
+            "tag_name": {
+              "type": "string",
+              "id": 5
+            },
+            "start_time": {
+              "type": "uint32",
+              "id": 6
+            },
+            "end_time": {
+              "type": "uint32",
+              "id": 7
+            },
+            "url": {
+              "type": "string",
+              "id": 8
+            },
+            "type": {
+              "type": "uint32",
+              "id": 9
+            },
+            "sort": {
+              "type": "uint32",
+              "id": 10
+            },
+            "need_popout": {
+              "type": "uint32",
+              "id": 11
+            }
+          }
+        },
         "Lobby": {
           "methods": {
             "fetchConnectionInfo": {
@@ -10403,6 +10456,10 @@
             "snowballActivityReceiveReward": {
               "requestType": "ReqSnowballActivityReceiveReward",
               "responseType": "ResSnowballActivityReceiveReward"
+            },
+            "fetchBannerActivityData": {
+              "requestType": "ReqFetchBannerActivityData",
+              "responseType": "ResFetchBannerActivityData"
             },
             "marathonActivityStartRace": {
               "requestType": "ReqMarathonActivityStartRace",
@@ -18795,6 +18852,14 @@
                 "modify_score": {
                   "type": "int32",
                   "id": 5
+                },
+                "rank": {
+                  "type": "uint32",
+                  "id": 6
+                },
+                "rank_percent": {
+                  "type": "uint32",
+                  "id": 7
                 }
               }
             },
@@ -18815,6 +18880,10 @@
                 "modify_score": {
                   "type": "int32",
                   "id": 4
+                },
+                "rank_percent": {
+                  "type": "uint32",
+                  "id": 5
                 }
               }
             }
@@ -18890,6 +18959,10 @@
                 "rank": {
                   "type": "uint32",
                   "id": 4
+                },
+                "rank_percent": {
+                  "type": "uint32",
+                  "id": 5
                 }
               }
             }
@@ -20704,6 +20777,32 @@
               "rule": "repeated",
               "type": "ExecuteReward",
               "id": 3
+            }
+          }
+        },
+        "ReqFetchBannerActivityData": {
+          "fields": {
+            "activity_id_list": {
+              "rule": "repeated",
+              "type": "uint32",
+              "id": 1
+            },
+            "lang": {
+              "type": "string",
+              "id": 2
+            }
+          }
+        },
+        "ResFetchBannerActivityData": {
+          "fields": {
+            "error": {
+              "type": "Error",
+              "id": 1
+            },
+            "activity_list": {
+              "rule": "repeated",
+              "type": "BannerActivityData",
+              "id": 2
             }
           }
         },
