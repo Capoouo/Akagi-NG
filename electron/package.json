@@ -1,7 +1,7 @@
 {
   "name": "akagi-ng-desktop",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Akagi-NG Electron Desktop App",
   "author": "Akagi-NG Contributors",
   "license": "AGPL-3.0",
@@ -13,7 +13,7 @@
     "package": "electron-builder --publish never"
   },
   "devDependencies": {
-    "electron": "~40.8.5",
+    "electron": "40.8.5",
     "electron-builder": "^26.8.1",
     "wait-on": "^9.0.4"
   },

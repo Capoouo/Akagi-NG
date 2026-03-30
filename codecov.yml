@@ -1,5 +1,7 @@
-# Codecov Configuration
-# Docs: https://docs.codecov.com/docs/codecov-yaml
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
 
 coverage:
   precision: 2
@@ -21,25 +23,31 @@ coverage:
         if_ci_failed: error
         informational: false
 
+flags:
+  backend:
+    paths:
+      - akagi_backend/akagi_ng/
+
+fixes:
+  - 'akagi_ng/::akagi_backend/akagi_ng/'
+
 comment:
   layout: diff,flags,files,footer
   behavior: default
   require_changes: false
   require_base: false
   require_head: true
-  # 防止多个 job 上传时重复评论
-  after_n_builds: 1
 
 ignore:
-  - 'scripts/'
-  - 'tests/'
+  - scripts/
+  - tests/
   - '**/test_*.py'
   - '**/__init__.py'
   - '**/__main__.py'
   - '.venv/'
   - '*.egg-info/'
-  - 'build/'
-  - 'dist/'
+  - build/
+  - dist/
 
 github_checks:
   annotations: true
