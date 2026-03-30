@@ -32,7 +32,7 @@ function Dashboard({ settingsPromise }: DashboardProps) {
 
   const handleLocaleChange = useCallback(
     async (newLocale: string) => {
-      updateSetting(['locale'], newLocale as string);
+      updateSetting(['locale'], newLocale);
     },
     [updateSetting],
   );
@@ -54,13 +54,13 @@ function Dashboard({ settingsPromise }: DashboardProps) {
     }, APP_SPLASH_DURATION_MS);
 
     // 检查可选/关键资源
-    window.electron.invoke('check-resource-status').then((status) => {
-      setResourceStatus(status as ResourceStatus);
+    window.electron.invoke<ResourceStatus>('check-resource-status').then((status) => {
+      setResourceStatus(status);
     });
 
     // 监听来自 Electron 的 HUD 可见性变化（例如窗口关闭/隐藏）
-    const unsubHud = window.electron.on('hud-visibility-changed', (visible) => {
-      context.setIsHudActive(visible as boolean);
+    const unsubHud = window.electron.on('hud-visibility-changed', (visible: boolean) => {
+      context.setIsHudActive(visible);
     });
 
     return () => {

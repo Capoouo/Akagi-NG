@@ -11,9 +11,7 @@ const updateSnapshot = (version: string) => {
   listeners.forEach((l) => l());
 };
 
-if (window.electron) {
-  window.electron.on('app:update-available', (v) => updateSnapshot(v as string));
-}
+window.electron.on('app:update-available', (version: string) => updateSnapshot(version));
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener);

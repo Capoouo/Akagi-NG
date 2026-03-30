@@ -151,7 +151,7 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
 
   // 3. 远程监听（进程间通信）
   useEffect(() => {
-    const unsub = window.electron.on('locale-changed', (newLocale) => {
+    const unsub = window.electron.on('locale-changed', (newLocale: string) => {
       dispatch({ type: 'REMOTE_UPDATE', payload: { locale: newLocale } });
     });
     return () => unsub();

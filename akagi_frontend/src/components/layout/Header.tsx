@@ -52,11 +52,11 @@ const HeaderContent: FC<HeaderProps> = memo(
     const [isMaximized, setIsMaximized] = useState(false);
 
     useEffect(() => {
-      const unsub = window.electron.on('window-state-changed', (maximized) => {
-        setIsMaximized(maximized as boolean);
+      const unsub = window.electron.on('window-state-changed', (maximized: boolean) => {
+        setIsMaximized(maximized);
       });
-      window.electron.invoke('is-window-maximized').then((maximized) => {
-        setIsMaximized(maximized as boolean);
+      window.electron.invoke<boolean>('is-window-maximized').then((maximized) => {
+        setIsMaximized(maximized);
       });
       return unsub;
     }, []);
