@@ -429,4 +429,4 @@ The core source code of this software follows the [GNU Affero General Public Lic
 ## Acknowledgements & Third-Party Resources
 
 The `lib` (containing `libriichi` binary extensions) and `models` (AI weight files) bundled in the releases of this project are sourced directly from the project [shinkuan/Akagi](https://github.com/shinkuan/Akagi).
-These compiled binaries and model weights are the property of their original authors and are distributed under their respective open-source licenses. We extend our greatest gratitude to the original authors for their incredible work.
+These compiled binaries and model weights are the property of their original authors and are distributed under AGPLv3 with the Commons Clause. We extend our greatest gratitude to the original authors for their incredible work.
