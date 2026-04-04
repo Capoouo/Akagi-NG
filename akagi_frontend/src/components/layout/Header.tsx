@@ -9,8 +9,7 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import type { FC } from 'react';
-import { memo, use, useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -35,142 +34,138 @@ interface HeaderProps {
   isConnected: boolean;
 }
 
-const HeaderContent: FC<HeaderProps> = memo(
-  ({
-    isLaunching,
-    onLaunch,
-    onOpenSettings,
-    locale,
-    onLocaleChange,
-    onShutdown,
-    onToggleHud,
-    isHudActive = false,
-    isConnected,
-  }) => {
-    const { t } = useTranslation();
-    const { theme, setTheme } = useTheme();
-    const [isMaximized, setIsMaximized] = useState(false);
+function HeaderContent({
+  isLaunching,
+  onLaunch,
+  onOpenSettings,
+  locale,
+  onLocaleChange,
+  onShutdown,
+  onToggleHud,
+  isHudActive = false,
+  isConnected,
+}: HeaderProps) {
+  const { t } = useTranslation();
+  const { theme, setTheme } = useTheme();
+  const [isMaximized, setIsMaximized] = useState(false);
 
-    useEffect(() => {
-      const unsub = window.electron.on('window-state-changed', (maximized: boolean) => {
-        setIsMaximized(maximized);
-      });
-      window.electron.invoke<boolean>('is-window-maximized').then((maximized) => {
-        setIsMaximized(maximized);
-      });
-      return unsub;
-    }, []);
+  useEffect(() => {
+    const unsub = window.electron.on('window-state-changed', (maximized: boolean) => {
+      setIsMaximized(maximized);
+    });
+    window.electron.invoke<boolean>('is-window-maximized').then((maximized) => {
+      setIsMaximized(maximized);
+    });
+    return unsub;
+  }, []);
 
-    return (
-      <header className='draggable bg-linear-to-b from-white/50 to-transparent dark:from-black/50 dark:to-transparent'>
-        <div className='flex h-16 items-center justify-between px-4 sm:px-6'>
-          {/* Logo & Title */}
-          <div className='flex items-center gap-3'>
-            {/* Status Indicator */}
-            <div className='relative flex h-2.5 w-2.5 items-center justify-center'>
-              <ModelStatusIndicator
-                isConnected={isConnected}
-                className='static inset-auto top-auto left-auto m-0 transform-none animate-none'
-              />
-            </div>
-            <h1 className='bg-linear-to-r from-pink-600 to-violet-600 bg-clip-text text-xl font-bold text-transparent dark:from-pink-400 dark:to-violet-400'>
-              {t('app.title')}
-            </h1>
+  return (
+    <header className='draggable bg-linear-to-b from-white/50 to-transparent dark:from-black/50 dark:to-transparent'>
+      <div className='flex h-16 items-center justify-between px-4 sm:px-6'>
+        {/* Logo & Title */}
+        <div className='flex items-center gap-3'>
+          {/* Status Indicator */}
+          <div className='relative flex h-2.5 w-2.5 items-center justify-center'>
+            <ModelStatusIndicator
+              isConnected={isConnected}
+              className='static inset-auto top-auto left-auto m-0 transform-none animate-none'
+            />
           </div>
-
-          {/* Actions - Control Group */}
-          <div className='flex h-9 items-center gap-1'>
-            {/* Launch Button */}
-            <Button
-              variant='ghost'
-              size='sm'
-              className='no-drag hidden h-full rounded-md px-3 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 sm:flex dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
-              onClick={onLaunch}
-              disabled={isLaunching}
-            >
-              {isLaunching ? (
-                <RefreshCw className='mr-2 h-4 w-4 animate-spin' />
-              ) : (
-                <ExternalLink className='mr-2 h-4 w-4' />
-              )}
-              {t('app.launch_game')}
-            </Button>
-
-            {/* Language Switcher */}
-            {locale && onLocaleChange && (
-              <Select value={locale} onValueChange={onLocaleChange}>
-                <SelectTrigger className='no-drag aspect-square h-full justify-center rounded-md border-none bg-transparent p-0 text-zinc-500 shadow-none transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus:ring-0 focus:ring-offset-0 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 [&>svg:last-child]:hidden'>
-                  <Globe className='h-4 w-4' />
-                </SelectTrigger>
-                <SelectContent align='end'>
-                  {SUPPORTED_LOCALES.map((loc) => (
-                    <SelectItem key={loc.value} value={loc.value}>
-                      {loc.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* Theme Toggle */}
-            <ThemeToggle theme={theme} setTheme={setTheme} />
-
-            {/* Settings Button */}
-            <HeaderIconButton
-              icon={SettingsIcon}
-              onClick={onOpenSettings}
-              aria-label='Open settings'
-            />
-
-            {/* HUD Toggle Button */}
-            {onToggleHud && (
-              <HeaderIconButton
-                icon={Monitor}
-                onClick={() => onToggleHud(!isHudActive)}
-                className={cn(
-                  isHudActive &&
-                    'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50',
-                )}
-                aria-label='Toggle HUD'
-              />
-            )}
-
-            {/* Window Controls */}
-            <HeaderIconButton
-              icon={Minus}
-              onClick={() => window.electron.invoke('minimize-window')}
-              aria-label='Minimize'
-            />
-
-            <HeaderIconButton
-              icon={isMaximized ? Copy : Square}
-              iconClassName={isMaximized ? '-scale-x-100 -rotate-90' : ''}
-              onClick={() => window.electron.invoke('maximize-window')}
-              aria-label={isMaximized ? 'Restore' : 'Maximize'}
-            />
-
-            {/* Shutdown Button */}
-            {onShutdown && (
-              <HeaderIconButton
-                icon={X}
-                onClick={onShutdown}
-                className='text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
-                aria-label='Shutdown'
-              />
-            )}
-          </div>
+          <h1 className='bg-linear-to-r from-pink-600 to-violet-600 bg-clip-text text-xl font-bold text-transparent dark:from-pink-400 dark:to-violet-400'>
+            {t('app.title')}
+          </h1>
         </div>
-      </header>
-    );
-  },
-);
 
-HeaderContent.displayName = 'HeaderContent';
+        {/* Actions - Control Group */}
+        <div className='flex h-9 items-center gap-1'>
+          {/* Launch Button */}
+          <Button
+            variant='ghost'
+            size='sm'
+            className='no-drag hidden h-full rounded-md px-3 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 sm:flex dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+            onClick={onLaunch}
+            disabled={isLaunching}
+          >
+            {isLaunching ? (
+              <RefreshCw className='mr-2 h-4 w-4 animate-spin' />
+            ) : (
+              <ExternalLink className='mr-2 h-4 w-4' />
+            )}
+            {t('app.launch_game')}
+          </Button>
 
-export const Header: FC<Omit<HeaderProps, 'isConnected'>> = (props) => {
+          {/* Language Switcher */}
+          {locale && onLocaleChange && (
+            <Select value={locale} onValueChange={onLocaleChange}>
+              <SelectTrigger className='no-drag aspect-square h-full justify-center rounded-md border-none bg-transparent p-0 text-zinc-500 shadow-none transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus:ring-0 focus:ring-offset-0 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 [&>svg:last-child]:hidden'>
+                <Globe className='h-4 w-4' />
+              </SelectTrigger>
+              <SelectContent align='end'>
+                {SUPPORTED_LOCALES.map((loc) => (
+                  <SelectItem key={loc.value} value={loc.value}>
+                    {loc.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Theme Toggle */}
+          <ThemeToggle theme={theme} setTheme={setTheme} />
+
+          {/* Settings Button */}
+          <HeaderIconButton
+            icon={SettingsIcon}
+            onClick={onOpenSettings}
+            aria-label='Open settings'
+          />
+
+          {/* HUD Toggle Button */}
+          {onToggleHud && (
+            <HeaderIconButton
+              icon={Monitor}
+              onClick={() => onToggleHud(!isHudActive)}
+              className={cn(
+                isHudActive &&
+                  'bg-violet-100 text-violet-600 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50',
+              )}
+              aria-label='Toggle HUD'
+            />
+          )}
+
+          {/* Window Controls */}
+          <HeaderIconButton
+            icon={Minus}
+            onClick={() => window.electron.invoke('minimize-window')}
+            aria-label='Minimize'
+          />
+
+          <HeaderIconButton
+            icon={isMaximized ? Copy : Square}
+            iconClassName={isMaximized ? '-scale-x-100 -rotate-90' : ''}
+            onClick={() => window.electron.invoke('maximize-window')}
+            aria-label={isMaximized ? 'Restore' : 'Maximize'}
+          />
+
+          {/* Shutdown Button */}
+          {onShutdown && (
+            <HeaderIconButton
+              icon={X}
+              onClick={onShutdown}
+              className='text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:hover:text-rose-300'
+              aria-label='Shutdown'
+            />
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+export function Header(props: Omit<HeaderProps, 'isConnected'>) {
   const gameContext = use(GameContext);
   if (!gameContext) throw new Error('GameContext not found');
   const { isConnected } = gameContext;
 
   return <HeaderContent {...props} isConnected={isConnected} />;
-};
+}

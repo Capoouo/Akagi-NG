@@ -198,13 +198,7 @@ export class GameHandler {
   ) {
     const { requestId, response } = params;
 
-    let data = '';
-    let opcode = -1;
-
-    if (response && response.payloadData) {
-      data = response.payloadData;
-      opcode = response.opcode ?? -1;
-    } else {
+    if (!response || !response.payloadData) {
       return;
     }
 
@@ -213,8 +207,8 @@ export class GameHandler {
       type: 'websocket',
       requestId: requestId,
       direction: direction,
-      data: data, // Base64 string
-      opcode: opcode,
+      data: response.payloadData, // Base64 string
+      opcode: response.opcode ?? -1,
       time: Date.now() / 1000,
     };
 

@@ -1,5 +1,5 @@
 import { ArrowDownToLine } from 'lucide-react';
-import { type FC, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 
 type StoreSnapshot = { version: string };
 
@@ -22,7 +22,7 @@ const subscribe = (listener: () => void) => {
 
 const getSnapshot = () => snapshot;
 
-export const UpdateBadge: FC = () => {
+export function UpdateBadge() {
   const { version } = useSyncExternalStore(subscribe, getSnapshot);
 
   if (!version) {
@@ -45,4 +45,4 @@ export const UpdateBadge: FC = () => {
       <span className='w-[5ch] text-center tabular-nums'>v{version}</span>
     </button>
   );
-};
+}

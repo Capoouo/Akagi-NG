@@ -25,5 +25,5 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [data, notifications, isConnected, error, statusMessage, statusType, isHudActive],
   );
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return <GameContext value={value}>{children}</GameContext>;
 }

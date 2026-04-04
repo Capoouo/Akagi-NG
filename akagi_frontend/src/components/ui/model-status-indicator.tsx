@@ -1,4 +1,4 @@
-import { use, useMemo } from 'react';
+import { use } from 'react';
 
 import { GameContext } from '@/contexts/GameContext';
 import { cn } from '@/lib/utils';
@@ -32,7 +32,7 @@ export function ModelStatusIndicator({ isConnected, className }: ModelStatusIndi
   // 当上下文缺失时，默认视为断开连接
   const connected = isConnected ?? context?.isConnected ?? false;
 
-  const currentStatus: StatusType = useMemo(() => {
+  const currentStatus: StatusType = (() => {
     // 0. 断开连接（最高优先级）
     if (!connected) return 'disconnected';
 
@@ -47,7 +47,7 @@ export function ModelStatusIndicator({ isConnected, className }: ModelStatusIndi
     // 3. 正常：在线/本地/空引擎
     if (data.engine_type === 'null') return 'nullEngine';
     return data.engine_type === 'akagiot' ? 'online' : 'local';
-  }, [data, connected]);
+  })();
 
   if (currentStatus === 'hidden') return null;
 

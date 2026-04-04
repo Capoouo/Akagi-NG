@@ -1,4 +1,4 @@
-import { type FC, memo } from 'react';
+import { memo } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -9,7 +9,12 @@ interface MahjongTileProps {
   isBack?: boolean;
 }
 
-export const MahjongTile: FC<MahjongTileProps> = memo(({ tile, className, isGhost, isBack }) => {
+export const MahjongTile = memo(function MahjongTile({
+  tile,
+  className,
+  isGhost,
+  isBack,
+}: MahjongTileProps) {
   const svgPath = `Resources/${tile}.svg`;
 
   return (
@@ -42,5 +47,3 @@ export const MahjongTile: FC<MahjongTileProps> = memo(({ tile, className, isGhos
     </div>
   );
 });
-
-MahjongTile.displayName = 'MahjongTile';

@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { type FC, memo, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { sortTiles } from '@/lib/mahjong';
 
@@ -11,7 +11,7 @@ interface ConsumedDisplayProps {
   tile?: string;
 }
 
-export const ConsumedDisplay: FC<ConsumedDisplayProps> = memo(({ action, consumed, tile }) => {
+export function ConsumedDisplay({ action, consumed, tile }: ConsumedDisplayProps) {
   const isNaki = action === 'chi' || action === 'pon' || action === 'kan';
   const isAnkan = action === 'kan' && consumed.length === 4;
   const isKakan = action === 'kan' && consumed.length === 1;
@@ -36,11 +36,19 @@ export const ConsumedDisplay: FC<ConsumedDisplayProps> = memo(({ action, consume
     return sorted;
   }, [action, consumed, isAnkan, isNaki]);
 
+  const tileItems = useMemo(() => {
+    return handTiles.map((t) => ({ tile: t, id: crypto.randomUUID() }));
+  }, [handTiles]);
+
+  const ghostItems = useMemo(() => {
+    return Array.from({ length: 3 }).map(() => crypto.randomUUID());
+  }, []);
+
   if (!isNaki) {
     return (
       <div className='flex gap-1'>
-        {handTiles.map((t, i) => (
-          <MahjongTile key={i} tile={t} />
+        {tileItems.map((item) => (
+          <MahjongTile key={item.id} tile={item.tile} />
         ))}
       </div>
     );
@@ -58,17 +66,17 @@ export const ConsumedDisplay: FC<ConsumedDisplayProps> = memo(({ action, consume
 
       <div className='flex gap-1'>
         {/* 构成副露的牌 */}
-        {handTiles.map((t, i) => (
-          <MahjongTile key={`hand-${i}`} tile={t} isBack={isAnkan && (i === 0 || i === 3)} />
+        {tileItems.map((item, i) => (
+          <MahjongTile
+            key={`hand-${item.id}`}
+            tile={item.tile}
+            isBack={isAnkan && (i === 0 || i === 3)}
+          />
         ))}
         {/* 加杠时展示之前碰的牌 */}
         {isKakan &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <MahjongTile key={`ghost-${i}`} tile={tile!.replace('r', '')} isGhost />
-          ))}
+          ghostItems.map((gid) => <MahjongTile key={gid} tile={tile!.replace('r', '')} isGhost />)}
       </div>
     </>
   );
-});
-
-ConsumedDisplay.displayName = 'ConsumedDisplay';
+}

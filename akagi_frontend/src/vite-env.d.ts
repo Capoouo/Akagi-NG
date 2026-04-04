@@ -7,7 +7,7 @@ declare const __AKAGI_VERSION__: string;
 
 // .svg
 declare module '*.svg' {
-  import type { FC, SVGProps } from 'react';
-  const content: FC<SVGProps<SVGSVGElement>>;
+  import type { ReactElement, SVGProps } from 'react';
+  const content: (props: SVGProps<SVGSVGElement>) => ReactElement;
   export default content;
 }

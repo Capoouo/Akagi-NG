@@ -1,5 +1,4 @@
 import { Laptop, Moon, Sun } from 'lucide-react';
-import { type FC, memo } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -34,7 +33,7 @@ interface ThemeToggleProps {
   setTheme: (theme: Theme) => void;
 }
 
-export const ThemeToggle: FC<ThemeToggleProps> = memo(({ theme, setTheme }) => {
+export function ThemeToggle({ theme, setTheme }: ThemeToggleProps) {
   const activeIndex = THEME_OPTIONS.findIndex((opt) => opt.value === theme);
   const activeOption = THEME_OPTIONS[activeIndex];
 
@@ -76,6 +75,4 @@ export const ThemeToggle: FC<ThemeToggleProps> = memo(({ theme, setTheme }) => {
       })}
     </div>
   );
-});
-
-ThemeToggle.displayName = 'ThemeToggle';
+}

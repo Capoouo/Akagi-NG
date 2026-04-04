@@ -1,5 +1,5 @@
 import { Monitor } from 'lucide-react';
-import { type FC, memo, use, useLayoutEffect, useRef, useState } from 'react';
+import { use, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { STREAM_PLAYER_HEIGHT, STREAM_PLAYER_WIDTH } from '@/config/constants';
@@ -14,9 +14,8 @@ interface StreamPlayerProps {
 
 /**
  * HUD 激活时的覆盖层组件
- * 使用 memo 优化,因为其内容相对静态
  */
-const HudOverlay = memo(() => {
+function HudOverlay() {
   const { t } = useTranslation();
   return (
     <div className='flex h-full w-full flex-col items-center justify-center gap-4 p-8 text-center'>
@@ -31,16 +30,12 @@ const HudOverlay = memo(() => {
       </div>
     </div>
   );
-});
-
-HudOverlay.displayName = 'HudOverlay';
+}
 
 /**
  * 视频流播放器组件
- * 注意：由于直接订阅了 GameContext，该组件本身无法通过 React.memo 有效优化，
- * 因此我们将内部静态部分拆分为子组件进行 memo 化。
  */
-const StreamPlayer: FC<StreamPlayerProps> = ({ className }) => {
+export default function StreamPlayer({ className }: StreamPlayerProps) {
   const context = use(GameContext);
   if (!context) throw new Error('GameContext not found');
   const { data, isHudActive } = context;
@@ -58,15 +53,10 @@ const StreamPlayer: FC<StreamPlayerProps> = ({ className }) => {
     const updateScale = () => {
       if (wrapperRef.current) {
         const { width, height } = wrapperRef.current.getBoundingClientRect();
-        const scaleW = width / STREAM_PLAYER_WIDTH;
-        const scaleH = height / STREAM_PLAYER_HEIGHT;
-        const newScale = Math.min(scaleW, scaleH);
-
-        setScale(newScale);
+        setScale(Math.min(width / STREAM_PLAYER_WIDTH, height / STREAM_PLAYER_HEIGHT));
       }
     };
 
-    updateScale();
     const observer = new ResizeObserver(updateScale);
     if (wrapperRef.current) {
       observer.observe(wrapperRef.current);
@@ -106,6 +96,4 @@ const StreamPlayer: FC<StreamPlayerProps> = ({ className }) => {
       </div>
     </div>
   );
-};
-
-export default StreamPlayer;
+}

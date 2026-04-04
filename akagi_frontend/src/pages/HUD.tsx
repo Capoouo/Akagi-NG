@@ -8,20 +8,20 @@ import { ModelStatusIndicator } from '@/components/ui/model-status-indicator';
 import { HUD_MAX_WIDTH, HUD_MIN_WIDTH } from '@/config/constants';
 
 export default function Hud() {
-  const startPos = useRef<{ x: number; w: number; active: boolean }>({
+  const startPosRef = useRef<{ x: number; w: number; active: boolean }>({
     x: 0,
     w: 0,
     active: false,
   });
-  const rafId = useRef<number | null>(null);
-  const pendingBounds = useRef<{ width: number; height: number } | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+  const pendingBoundsRef = useRef<{ width: number; height: number } | null>(null);
 
   const handlePointerDown = (e: PointerEvent) => {
     e.preventDefault();
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
 
-    startPos.current = {
+    startPosRef.current = {
       x: e.screenX,
       w: window.innerWidth,
       active: true,
@@ -30,34 +30,34 @@ export default function Hud() {
   };
 
   const handlePointerMove = (e: PointerEvent) => {
-    if (!startPos.current.active) return;
+    if (!startPosRef.current.active) return;
 
     // 计算新尺寸
-    const deltaX = e.screenX - startPos.current.x;
-    const width = Math.min(HUD_MAX_WIDTH, Math.max(HUD_MIN_WIDTH, startPos.current.w + deltaX));
+    const deltaX = e.screenX - startPosRef.current.x;
+    const width = Math.min(HUD_MAX_WIDTH, Math.max(HUD_MIN_WIDTH, startPosRef.current.w + deltaX));
     // 强制 16:9 比例
     const height = Math.round((width * 9) / 16);
 
-    pendingBounds.current = { width, height };
-    if (rafId.current === null) {
-      rafId.current = requestAnimationFrame(() => {
-        rafId.current = null;
-        if (pendingBounds.current) {
-          window.electron.invoke('set-window-bounds', pendingBounds.current);
+    pendingBoundsRef.current = { width, height };
+    if (rafIdRef.current === null) {
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
+        if (pendingBoundsRef.current) {
+          window.electron.invoke('set-window-bounds', pendingBoundsRef.current);
         }
       });
     }
   };
 
   const handlePointerUp = (e: PointerEvent) => {
-    if (!startPos.current.active) return;
+    if (!startPosRef.current.active) return;
 
-    startPos.current.active = false;
+    startPosRef.current.active = false;
     document.body.style.cursor = '';
-    pendingBounds.current = null;
-    if (rafId.current !== null) {
-      cancelAnimationFrame(rafId.current);
-      rafId.current = null;
+    pendingBoundsRef.current = null;
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
 
     try {

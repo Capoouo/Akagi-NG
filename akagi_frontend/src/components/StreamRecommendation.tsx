@@ -1,4 +1,3 @@
-import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConfidenceRing } from '@/components/mahjong/confidence-ring';
@@ -8,13 +7,13 @@ import { ACTION_CONFIG, SHOW_CONSUMED_ACTIONS } from '@/config/actionConfig';
 import { cn } from '@/lib/utils';
 import type { Recommendation } from '@/types';
 
-const Recommendation: FC<Recommendation> = ({
+export default function StreamRecommendation({
   action,
   confidence,
   consumed,
   sim_candidates,
   tile,
-}) => {
+}: Recommendation) {
   const { t } = useTranslation();
   const config = ACTION_CONFIG[action];
   const hasSimCandidates = sim_candidates && sim_candidates.length > 0;
@@ -80,8 +79,8 @@ const Recommendation: FC<Recommendation> = ({
           {/* Case A: Riichi Declaration Candidates */}
           {hasSimCandidates ? (
             <div className='flex gap-8'>
-              {sim_candidates.map((cand, idx) => (
-                <div key={idx} className='flex items-end gap-4'>
+              {sim_candidates.map((cand) => (
+                <div key={cand.tile} className='flex items-end gap-4'>
                   {/* Tile */}
                   <MahjongTile tile={cand.tile} className='scale-110 shadow-md' />
                   {/* Show confidence for each candidate (only if > 1) */}
@@ -123,6 +122,4 @@ const Recommendation: FC<Recommendation> = ({
       </div>
     </div>
   );
-};
-
-export default memo(Recommendation);
+}

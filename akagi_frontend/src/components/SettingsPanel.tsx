@@ -1,6 +1,5 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react';
-import type { FC } from 'react';
-import { memo, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ interface SettingsPanelProps {
   onClose: () => void;
 }
 
-const SettingsPanel: FC<SettingsPanelProps> = memo(({ open, onClose }) => {
+export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   const { t } = useTranslation();
   const {
     settings,
@@ -126,8 +125,4 @@ const SettingsPanel: FC<SettingsPanelProps> = memo(({ open, onClose }) => {
       </ModalContent>
     </Modal>
   );
-});
-
-SettingsPanel.displayName = 'SettingsPanel';
-
-export default SettingsPanel;
+}

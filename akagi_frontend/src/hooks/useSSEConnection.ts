@@ -18,80 +18,63 @@ export function useSSEConnection(url: string | null): UseSSEConnectionResult {
   useEffect(() => {
     if (!url) return;
 
-    let currentSource: EventSource | null = null;
-    let stopped = false;
-
-    const connect = () => {
-      if (stopped) return;
-
-      if (currentSource) {
-        currentSource.close();
-        currentSource = null;
-      }
-
-      let es: EventSource;
-      try {
-        es = new EventSource(url);
-      } catch (e) {
-        console.error('Invalid SSE URL:', e);
+    let es: EventSource;
+    try {
+      es = new EventSource(url);
+    } catch (e) {
+      console.error('Invalid SSE URL:', e);
+      queueMicrotask(() => {
         setError('config_error');
         setIsConnected(false);
-        return;
-      }
-
-      currentSource = es;
-
-      es.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-      };
-
-      // 处理推荐数据事件
-      es.addEventListener('recommendations', (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          // 数据格式: { "recommendations": ..., "is_riichi": ... }
-          setData(parsed);
-        } catch (e) {
-          console.error('Failed to parse recommendations', e);
-        }
       });
+      return;
+    }
 
-      // 处理通知事件
-      es.addEventListener('notification', (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          // 预期格式: { "list": [...] }
-          if (parsed.list) {
-            setNotifications(parsed.list);
-          }
-        } catch (e) {
-          console.error('Failed to parse notification', e);
-        }
-      });
-
-      // 保留 onmessage 处理未命名事件
-      es.onmessage = () => {
-        // 空操作
-      };
-
-      es.onerror = (event) => {
-        console.error('SSE error:', event);
-        setIsConnected(false);
-        setError('service_disconnected');
-        if (es.readyState === EventSource.CLOSED) {
-          es.close();
-        }
-      };
+    const handleOpen = () => {
+      setIsConnected(true);
+      setError(null);
     };
 
-    connect();
+    const handleRecommendations = (event: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        setData(parsed);
+      } catch (e) {
+        console.error('Failed to parse recommendations', e);
+      }
+    };
+
+    const handleNotification = (event: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed.list) {
+          setNotifications(parsed.list);
+        }
+      } catch (e) {
+        console.error('Failed to parse notification', e);
+      }
+    };
+
+    const handleError = (event: Event) => {
+      console.error('SSE error:', event);
+      setIsConnected(false);
+      setError('service_disconnected');
+      if (es.readyState === EventSource.CLOSED) {
+        es.close();
+      }
+    };
+
+    es.addEventListener('open', handleOpen);
+    es.addEventListener('recommendations', handleRecommendations);
+    es.addEventListener('notification', handleNotification);
+    es.addEventListener('error', handleError);
 
     return () => {
-      stopped = true;
-      if (currentSource) {
-        currentSource.close();
-      }
+      es.removeEventListener('open', handleOpen);
+      es.removeEventListener('recommendations', handleRecommendations);
+      es.removeEventListener('notification', handleNotification);
+      es.removeEventListener('error', handleError);
+      es.close();
     };
   }, [url]);
 

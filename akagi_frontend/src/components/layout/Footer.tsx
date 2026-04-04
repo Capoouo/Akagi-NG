@@ -1,30 +1,30 @@
 import { AppWindow, Scale } from 'lucide-react';
-import { type FC, memo } from 'react';
+import { type ReactNode } from 'react';
 
 import { AKAGI_VERSION } from '@/version';
 
 import { UpdateBadge } from './UpdateBadge';
 
-const ExternalLink: FC<{ href: string; icon: React.ReactNode; text: string }> = ({
-  href,
-  icon,
-  text,
-}) => (
-  <a
-    href={href}
-    draggable={false}
-    onClick={(e) => {
-      e.preventDefault();
-      window.electron.invoke('open-external', href);
-    }}
-    className='flex items-center gap-1.5 opacity-60 transition-opacity hover:opacity-100'
-  >
-    {icon}
-    <span>{text}</span>
-  </a>
-);
+function ExternalLink({ href, icon, text }: { href: string; icon: ReactNode; text: string }) {
+  return (
+    <a
+      href={href}
+      draggable={false}
+      onClick={(e) => {
+        e.preventDefault();
+        window.electron.invoke('open-external', href);
+      }}
+      className='flex items-center gap-1.5 opacity-60 transition-opacity hover:opacity-100'
+    >
+      {icon}
+      <span>{text}</span>
+    </a>
+  );
+}
 
-export const Footer: FC = memo(() => {
+const CURRENT_YEAR = new Date().getFullYear();
+
+export function Footer() {
   return (
     <footer className='py-1 text-center'>
       <div className='mx-auto max-w-7xl px-4'>
@@ -46,11 +46,9 @@ export const Footer: FC = memo(() => {
             text='License'
           />
           <div className='h-3 w-px bg-zinc-300 dark:bg-zinc-700' />
-          <span className='opacity-30'>© {new Date().getFullYear()} Akagi-NG contributors.</span>
+          <span className='opacity-30'>© {CURRENT_YEAR} Akagi-NG contributors.</span>
         </div>
       </div>
     </footer>
   );
-});
-
-Footer.displayName = 'Footer';
+}

@@ -20,7 +20,7 @@ classifiers = [
 dependencies = [
     # Basic
     "loguru~=0.7.3",
-    "requests~=2.33.0",
+    "requests~=2.33.1",
     "jsonschema~=4.26.0",
     # Majsoul
     "protobuf~=7.34.1",
@@ -30,12 +30,12 @@ dependencies = [
     # MITM
     "mitmproxy~=12.2.1",
     # DataServer
-    "aiohttp~=3.13.4",
+    "aiohttp~=3.13.5",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.15.8",
+    "ruff>=0.15.9",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.1.0",

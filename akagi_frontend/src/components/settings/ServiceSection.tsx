@@ -1,4 +1,3 @@
-import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Input } from '@/components/ui/input';
@@ -14,7 +13,7 @@ interface ServiceSectionProps {
   ) => void;
 }
 
-export const ServiceSection: FC<ServiceSectionProps> = memo(({ settings, updateSetting }) => {
+export function ServiceSection({ settings, updateSetting }: ServiceSectionProps) {
   const { t } = useTranslation();
   return (
     <div className='space-y-4'>
@@ -46,6 +45,4 @@ export const ServiceSection: FC<ServiceSectionProps> = memo(({ settings, updateS
       </div>
     </div>
   );
-});
-
-ServiceSection.displayName = 'ServiceSection';
+}

@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -13,7 +13,7 @@ interface ModalProps {
   className?: string;
 }
 
-export const Modal: FC<ModalProps> = ({ open, onOpenChange, children, className }) => {
+export function Modal({ open, onOpenChange, children, className }: ModalProps) {
   // 监听 Escape 键
   useEffect(() => {
     if (open) {
@@ -65,73 +65,85 @@ export const Modal: FC<ModalProps> = ({ open, onOpenChange, children, className 
       </div>
     </div>
   );
-};
+}
 
 interface ModalHeaderProps {
   children: ReactNode;
   className?: string;
 }
 
-export const ModalHeader: FC<ModalHeaderProps> = ({ children, className }) => (
-  <div className={cn('border-border flex flex-col space-y-1.5 border-b p-6', className)}>
-    {children}
-  </div>
-);
+export function ModalHeader({ children, className }: ModalHeaderProps) {
+  return (
+    <div className={cn('border-border flex flex-col space-y-1.5 border-b p-6', className)}>
+      {children}
+    </div>
+  );
+}
 
 interface ModalTitleProps {
   children: ReactNode;
   className?: string;
 }
 
-export const ModalTitle: FC<ModalTitleProps> = ({ children, className }) => (
-  <h3 className={cn('text-lg leading-none font-semibold tracking-tight', className)}>{children}</h3>
-);
+export function ModalTitle({ children, className }: ModalTitleProps) {
+  return (
+    <h3 className={cn('text-lg leading-none font-semibold tracking-tight', className)}>
+      {children}
+    </h3>
+  );
+}
 
 interface ModalDescriptionProps {
   children: ReactNode;
   className?: string;
 }
 
-export const ModalDescription: FC<ModalDescriptionProps> = ({ children, className }) => (
-  <p className={cn('text-muted-foreground text-sm', className)}>{children}</p>
-);
+export function ModalDescription({ children, className }: ModalDescriptionProps) {
+  return <p className={cn('text-muted-foreground text-sm', className)}>{children}</p>;
+}
 
 interface ModalContentProps {
   children: ReactNode;
   className?: string;
 }
 
-export const ModalContent: FC<ModalContentProps> = ({ children, className }) => (
-  <div className={cn('flex-1 overflow-y-auto p-6', className)}>{children}</div>
-);
+export function ModalContent({ children, className }: ModalContentProps) {
+  return <div className={cn('flex-1 overflow-y-auto p-6', className)}>{children}</div>;
+}
 
 interface ModalFooterProps {
   children: ReactNode;
   className?: string;
 }
 
-export const ModalFooter: FC<ModalFooterProps> = ({ children, className }) => (
-  <div className={cn('border-border flex items-center justify-end gap-2 border-t p-6', className)}>
-    {children}
-  </div>
-);
+export function ModalFooter({ children, className }: ModalFooterProps) {
+  return (
+    <div
+      className={cn('border-border flex items-center justify-end gap-2 border-t p-6', className)}
+    >
+      {children}
+    </div>
+  );
+}
 
 interface ModalCloseProps {
   onClick: () => void;
   className?: string;
 }
 
-export const ModalClose: FC<ModalCloseProps> = ({ onClick, className }) => (
-  <Button
-    variant='ghost'
-    size='icon'
-    className={cn(
-      'ring-offset-background data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-3 right-3 h-8 w-8 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none dark:hover:bg-white/10',
-      className,
-    )}
-    onClick={onClick}
-  >
-    <X className='h-4 w-4' />
-    <span className='sr-only'>Close</span>
-  </Button>
-);
+export function ModalClose({ onClick, className }: ModalCloseProps) {
+  return (
+    <Button
+      variant='ghost'
+      size='icon'
+      className={cn(
+        'ring-offset-background data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-3 right-3 h-8 w-8 rounded-full opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none dark:hover:bg-white/10',
+        className,
+      )}
+      onClick={onClick}
+    >
+      <X className='h-4 w-4' />
+      <span className='sr-only'>Close</span>
+    </Button>
+  );
+}

@@ -1,4 +1,4 @@
-import { type FC, memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -10,8 +10,14 @@ interface ConfidenceRingProps {
   fontSize?: string;
 }
 
-export const ConfidenceRing: FC<ConfidenceRingProps> = memo(
-  ({ percentage, color, size = 112, stroke = 8, fontSize = 'text-5xl' }) => {
+export const ConfidenceRing = memo(
+  function ConfidenceRing({
+    percentage,
+    color,
+    size = 112,
+    stroke = 8,
+    fontSize = 'text-5xl',
+  }: ConfidenceRingProps) {
     const [currentPercentage, setCurrentPercentage] = useState(percentage);
     const valueAnimationRef = useRef<number | undefined>(undefined);
     const sprintAnimationRef = useRef<number | undefined>(undefined);
@@ -197,5 +203,3 @@ export const ConfidenceRing: FC<ConfidenceRingProps> = memo(
     );
   },
 );
-
-ConfidenceRing.displayName = 'ConfidenceRing';

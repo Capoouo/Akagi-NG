@@ -1,4 +1,3 @@
-import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { CapsuleSwitch } from '@/components/ui/capsule-switch';
@@ -16,7 +15,7 @@ interface ConnectionSectionProps {
   ) => void;
 }
 
-export const ConnectionSection: FC<ConnectionSectionProps> = memo(({ settings, updateSetting }) => {
+export function ConnectionSection({ settings, updateSetting }: ConnectionSectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -74,6 +73,4 @@ export const ConnectionSection: FC<ConnectionSectionProps> = memo(({ settings, u
       )}
     </div>
   );
-});
-
-ConnectionSection.displayName = 'ConnectionSection';
+}

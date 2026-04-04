@@ -1,5 +1,4 @@
 import { Bot } from 'lucide-react';
-import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { FullRecommendationData } from '@/types';
@@ -10,7 +9,7 @@ interface StreamRenderComponentProps {
   data: FullRecommendationData | null;
 }
 
-const StreamRenderComponent: FC<StreamRenderComponentProps> = memo(({ data }) => {
+export default function StreamRenderComponent({ data }: StreamRenderComponentProps) {
   const { t } = useTranslation();
   const isHudPage = window.location.hash === '#/hud';
 
@@ -48,8 +47,4 @@ const StreamRenderComponent: FC<StreamRenderComponentProps> = memo(({ data }) =>
       })}
     </div>
   );
-});
-
-StreamRenderComponent.displayName = 'StreamRenderComponent';
-
-export default StreamRenderComponent;
+}

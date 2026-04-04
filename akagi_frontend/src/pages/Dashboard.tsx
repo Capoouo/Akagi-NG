@@ -1,4 +1,4 @@
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToastContainer } from 'react-toastify';
 
@@ -41,14 +41,22 @@ function Dashboard({ settingsPromise }: DashboardProps) {
   const [showShutdownConfirm, setShowShutdownConfirm] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const [isSystemDark] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches
+      : false,
+  );
   const [resourceStatus, setResourceStatus] = useState<{
     lib: boolean;
     models: boolean;
   } | null>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, APP_SPLASH_DURATION_MS);
@@ -174,13 +182,7 @@ function Dashboard({ settingsPromise }: DashboardProps) {
       <ToastContainer
         autoClose={TOAST_DURATION_DEFAULT}
         position='top-right'
-        theme={
-          theme === 'system'
-            ? window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light'
-            : theme
-        }
+        theme={theme === 'system' ? (isSystemDark ? 'dark' : 'light') : theme}
       />
     </div>
   );

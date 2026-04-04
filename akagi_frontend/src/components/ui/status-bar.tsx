@@ -1,5 +1,5 @@
 import { AlertCircle, AlertTriangle, CheckCircle2, Info, type LucideIcon } from 'lucide-react';
-import type { FC, HTMLAttributes } from 'react';
+import type { HTMLAttributes } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -15,13 +15,13 @@ interface StatusBarProps extends HTMLAttributes<HTMLDivElement> {
   icon?: LucideIcon;
 }
 
-export const StatusBar: FC<StatusBarProps> = ({
+export function StatusBar({
   children,
   variant = 'info',
   icon: PropIcon,
   className,
   ...props
-}) => {
+}: StatusBarProps) {
   const Icon = PropIcon || VARIANT_ICONS[variant];
 
   return (
@@ -42,4 +42,4 @@ export const StatusBar: FC<StatusBarProps> = ({
       {children}
     </div>
   );
-};
+}

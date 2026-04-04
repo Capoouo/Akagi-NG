@@ -25,5 +25,5 @@ export function ConnectionProvider({ children, host, port, apiBase }: Connection
     } satisfies ConnectionConfig;
   }, [host, port, apiBase, clientId]);
 
-  return <ConnectionContext.Provider value={value}>{children}</ConnectionContext.Provider>;
+  return <ConnectionContext value={value}>{children}</ConnectionContext>;
 }

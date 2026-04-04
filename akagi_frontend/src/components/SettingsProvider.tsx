@@ -126,9 +126,9 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
 
   const { settings, saveStatus, restartRequired, isRestored, availableModels } = state;
 
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-  const toastId = useRef<string | number | null>(null);
-  const saveSeq = useRef(0);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const toastIdRef = useRef<string | number | null>(null);
+  const saveSeqRef = useRef(0);
 
   // --- Effects ---
 
@@ -168,53 +168,53 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
 
   const triggerSave = useCallback((nextSettings: Settings) => {
     const performSave = async () => {
-      const currentSaveId = ++saveSeq.current;
+      const currentSaveId = ++saveSeqRef.current;
       dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
 
       // 提示弹窗
-      if (toastId.current) {
-        notify.update(toastId.current, {
+      if (toastIdRef.current) {
+        notify.update(toastIdRef.current, {
           render: i18n.t('settings.status_saving'),
           isLoading: true,
         });
       } else {
-        toastId.current = notify.loading(i18n.t('settings.status_saving'));
+        toastIdRef.current = notify.loading(i18n.t('settings.status_saving'));
       }
 
       try {
         const result = await saveSettingsApi(nextSettings);
-        if (currentSaveId !== saveSeq.current) return;
+        if (currentSaveId !== saveSeqRef.current) return;
         if (result.restartRequired) dispatch({ type: 'SET_RESTART_REQUIRED' });
 
         dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
-        if (toastId.current !== null) {
-          notify.update(toastId.current, {
+        if (toastIdRef.current !== null) {
+          notify.update(toastIdRef.current, {
             render: i18n.t('settings.status_saved'),
             type: 'success',
             isLoading: false,
             autoClose: 2000,
           });
-          toastId.current = null;
+          toastIdRef.current = null;
         }
       } catch (e) {
-        if (currentSaveId !== saveSeq.current) return;
+        if (currentSaveId !== saveSeqRef.current) return;
         console.error('Save error:', e);
         dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
-        if (toastId.current !== null) {
-          notify.update(toastId.current, {
+        if (toastIdRef.current !== null) {
+          notify.update(toastIdRef.current, {
             render: i18n.t('settings.status_error'),
             type: 'error',
             isLoading: false,
             autoClose: TOAST_DURATION_DEFAULT,
           });
-          toastId.current = null;
+          toastIdRef.current = null;
         }
       }
     };
 
     // 防抖逻辑
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(performSave, SETTINGS_DEBOUNCE_MS);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(performSave, SETTINGS_DEBOUNCE_MS);
   }, []);
 
   // --- 对外接口 ---
@@ -321,5 +321,5 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
     ],
   );
 
-  return <SettingsContext.Provider value={contextValue}>{children}</SettingsContext.Provider>;
+  return <SettingsContext value={contextValue}>{children}</SettingsContext>;
 }

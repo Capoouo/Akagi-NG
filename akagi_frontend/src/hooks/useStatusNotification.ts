@@ -34,8 +34,8 @@ export function useStatusNotification(
   connectionError: string | null,
 ) {
   const { t } = useTranslation();
-  const [hiddenCodes, setHiddenCodes] = useState<Set<string>>(new Set());
-  const activeToastIds = useRef<Set<string>>(new Set());
+  const [hiddenCodes, setHiddenCodes] = useState<Set<string>>(() => new Set());
+  const activeToastIdsRef = useRef<Set<string>>(new Set());
 
   // 合并后端通知和连接错误
   const allNotifications = useMemo(() => {
@@ -126,7 +126,7 @@ export function useStatusNotification(
       if (config.placement === STATUS_PLACEMENT.TOAST) {
         currentToastIds.add(note.code);
 
-        if (!activeToastIds.current.has(note.code)) {
+        if (!activeToastIdsRef.current.has(note.code)) {
           const message = t(`status_messages.${config.messageKey || note.code}`, {
             defaultValue: note.msg || '',
             details: note.msg,
@@ -146,7 +146,7 @@ export function useStatusNotification(
     });
 
     // 2. 关闭需要移除的通知
-    activeToastIds.current.forEach((toastId) => {
+    activeToastIdsRef.current.forEach((toastId) => {
       if (currentToastIds.has(toastId)) return;
       const config = getStatusConfig(toastId);
       // 不要自动清除临时通知，让它们自然过期
@@ -155,7 +155,7 @@ export function useStatusNotification(
       toast.dismiss(toastId);
     });
 
-    activeToastIds.current = currentToastIds;
+    activeToastIdsRef.current = currentToastIds;
   }, [allNotifications, t]);
 
   // 处理临时状态的自动消失
