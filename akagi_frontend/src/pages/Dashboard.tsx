@@ -160,7 +160,7 @@ function Dashboard({ settingsPromise }: DashboardProps) {
           onToggleHud={handleToggleHud}
           isHudActive={context.isHudActive}
         />
-        <main className='flex w-full grow overflow-hidden px-4 py-4 sm:px-6'>
+        <main className='flex w-full grow overflow-hidden px-6 py-4'>
           <StreamPlayer className='h-full w-full' />
         </main>
 

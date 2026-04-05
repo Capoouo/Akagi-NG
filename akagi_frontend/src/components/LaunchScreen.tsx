@@ -19,7 +19,7 @@ export function LaunchScreen({
           alt='Akagi Logo'
           draggable={false}
           className={cn(
-            'relative h-24 w-24 drop-shadow-lg lg:h-32 lg:w-32',
+            'relative h-32 w-32 drop-shadow-lg',
             !isStatic && 'animate-in fade-in zoom-in-50 slide-in-from-bottom-4 duration-1000',
           )}
         />
@@ -29,7 +29,7 @@ export function LaunchScreen({
       <div className='flex flex-col items-center gap-3'>
         <h1
           className={cn(
-            'text-3xl font-bold tracking-tight lg:text-4xl',
+            'text-4xl font-bold tracking-tight',
             !isStatic &&
               'animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards delay-100 duration-1000',
           )}

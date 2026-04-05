@@ -61,7 +61,7 @@ function HeaderContent({
 
   return (
     <header className='draggable bg-linear-to-b from-white/50 to-transparent dark:from-black/50 dark:to-transparent'>
-      <div className='flex h-16 items-center justify-between px-4 sm:px-6'>
+      <div className='flex h-16 items-center justify-between px-6'>
         {/* Logo & Title */}
         <div className='flex items-center gap-3'>
           {/* Status Indicator */}
@@ -82,7 +82,7 @@ function HeaderContent({
           <Button
             variant='ghost'
             size='sm'
-            className='no-drag hidden h-full rounded-md px-3 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 sm:flex dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+            className='no-drag flex h-full rounded-md px-3 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
             onClick={onLaunch}
             disabled={isLaunching}
           >

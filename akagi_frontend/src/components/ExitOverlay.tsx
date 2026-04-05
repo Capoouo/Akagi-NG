@@ -11,10 +11,10 @@ export function ExitOverlay() {
           src='torii.svg'
           alt='Akagi Logo'
           draggable={false}
-          className='relative h-24 w-24 drop-shadow-lg lg:h-32 lg:w-32'
+          className='relative h-32 w-32 drop-shadow-lg'
         />
       </div>
-      <h1 className='mb-4 text-3xl font-bold tracking-tight text-rose-500 lg:text-4xl'>
+      <h1 className='mb-4 text-4xl font-bold tracking-tight text-rose-500'>
         {t('app.stopped_title')}
       </h1>
       <p className='text-muted-foreground text-lg font-medium'>{t('app.stopped_desc')}</p>
