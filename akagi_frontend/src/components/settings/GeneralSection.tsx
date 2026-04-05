@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -115,23 +114,6 @@ export function GeneralSection({
           </SelectContent>
         </Select>
       </SettingsItem>
-
-      {['majsoul', 'tenhou', 'auto'].includes(settings.platform) && (
-        <SettingsItem
-          label={t('settings.general.game_url')}
-          description={t('settings.general.game_url_desc')}
-        >
-          <Input
-            value={settings.game_url}
-            placeholder={
-              settings.platform === 'tenhou'
-                ? 'https://tenhou.net/3/'
-                : 'https://game.maj-soul.com/1/'
-            }
-            onChange={(e) => updateSetting(['game_url'], e.target.value)}
-          />
-        </SettingsItem>
-      )}
     </div>
   );
 }

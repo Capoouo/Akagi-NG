@@ -34,16 +34,29 @@ export function ConnectionSection({ settings, updateSetting }: ConnectionSection
         />
       </SettingsItem>
 
-      {['riichi_city', 'amatsuki'].includes(settings.platform) && !settings.mitm.enabled && (
-        <StatusBar variant='info'>{t('settings.connection.mitm_required_notice')}</StatusBar>
+      {!settings.mitm.enabled && (
+        <>
+          {['majsoul', 'tenhou', 'auto'].includes(settings.platform) && (
+            <SettingsItem label={t('settings.connection.game_url')}>
+              <Input
+                value={settings.game_url}
+                placeholder={
+                  settings.platform === 'tenhou'
+                    ? 'https://tenhou.net/3/'
+                    : 'https://game.maj-soul.com/1/'
+                }
+                onChange={(e) => updateSetting(['game_url'], e.target.value)}
+              />
+            </SettingsItem>
+          )}
+          {['riichi_city', 'amatsuki'].includes(settings.platform) && (
+            <StatusBar variant='info'>{t('settings.connection.mitm_required_notice')}</StatusBar>
+          )}
+        </>
       )}
 
       {settings.mitm.enabled && (
-        <div className='mt-6 space-y-4'>
-          <h4 className='text-sm font-semibold tracking-wider text-zinc-500'>
-            {t('settings.connection.mitm.title')}
-          </h4>
-
+        <>
           <SettingsItem label={t('settings.connection.mitm.host')}>
             <Input
               value={settings.mitm.host}
@@ -69,7 +82,7 @@ export function ConnectionSection({ settings, updateSetting }: ConnectionSection
               onChange={(e) => updateSetting(['mitm', 'upstream'], e.target.value)}
             />
           </SettingsItem>
-        </div>
+        </>
       )}
     </div>
   );

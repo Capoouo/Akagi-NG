@@ -20,18 +20,16 @@
         "riichi_city": "麻雀一番街",
         "amatsuki": "天月麻雀",
         "auto": "自動檢測"
-      },
-      "game_url": "遊戲位址",
-      "game_url_desc": "僅支援雀魂、天鳳。其他遊戲請使用「外部代理」模式。"
+      }
     },
     "connection": {
       "title": "遊戲連線",
       "mode": "連線模式",
       "mode_browser": "內建視窗",
+      "game_url": "遊戲位址",
       "mode_mitm": "外部代理",
       "mitm_required_notice": "麻雀一番街和天月麻雀僅支援外部代理模式，請切換連線模式。",
       "mitm": {
-        "title": "代理服務配置",
         "host": "監聽位址",
         "port": "監聽連接埠",
         "upstream": "上游代理 (可選)"

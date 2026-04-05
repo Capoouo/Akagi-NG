@@ -20,18 +20,16 @@
         "riichi_city": "Riichi City",
         "amatsuki": "Amatsuki Mahjong",
         "auto": "Auto Detect"
-      },
-      "game_url": "Game URL",
-      "game_url_desc": "Only supports Majsoul and Tenhou. Use Proxy mode for other games."
+      }
     },
     "connection": {
       "title": "Game Connection",
       "mode": "Connection Mode",
       "mode_browser": "Internal Browser",
+      "game_url": "Game URL",
       "mode_mitm": "External Proxy",
       "mitm_required_notice": "Riichi City and Amatsuki Mahjong only support External Proxy mode. Please switch the connection mode.",
       "mitm": {
-        "title": "Proxy Configuration",
         "host": "Listen Address",
         "port": "Listen Port",
         "upstream": "Upstream Proxy (Optional)"

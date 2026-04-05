@@ -20,18 +20,16 @@
         "riichi_city": "麻雀一番街",
         "amatsuki": "天月麻雀",
         "auto": "自動検出"
-      },
-      "game_url": "ゲームURL",
-      "game_url_desc": "雀魂・天鳳のみ対応しています。その他のゲームは「プロキシ」モードを使用してください。"
+      }
     },
     "connection": {
       "title": "ゲーム接続",
       "mode": "接続モード",
       "mode_browser": "内蔵ブラウザ",
+      "game_url": "ゲームURL",
       "mode_mitm": "外部プロキシ",
       "mitm_required_notice": "麻雀一番街と天月麻雀は外部プロキシモードのみ対応しています。接続モードを切り替えてください。",
       "mitm": {
-        "title": "プロキシ設定",
         "host": "リッスンアドレス",
         "port": "リッスンポート",
         "upstream": "上流プロキシ (任意)"

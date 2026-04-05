@@ -32,10 +32,10 @@ export function ModelConfigSection({ settings, updateSetting }: ModelConfigSecti
   const displayTemp = isEditingTemp ? tempInput : settings.model_config.temperature.toString();
 
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4'>
       <h3 className='settings-section-title'>{t('settings.model_config.title')}</h3>
 
-      <div className='grid grid-cols-1 gap-8 md:grid-cols-2'>
+      <div className='grid grid-cols-2 gap-6'>
         {/* Left Column: Engine & Model Selection */}
         <div className='space-y-4'>
           <SettingsItem label={t('settings.model_config.mode_selection')}>
@@ -48,7 +48,7 @@ export function ModelConfigSection({ settings, updateSetting }: ModelConfigSecti
           </SettingsItem>
 
           {settings.ot.online ? (
-            <div className='space-y-4'>
+            <>
               <SettingsItem label={t('settings.model_config.server_url')}>
                 <Input
                   className={
@@ -70,9 +70,9 @@ export function ModelConfigSection({ settings, updateSetting }: ModelConfigSecti
                   placeholder='<YOUR_API_KEY>'
                 />
               </SettingsItem>
-            </div>
+            </>
           ) : (
-            <div className='space-y-4'>
+            <>
               <SettingsItem label={t('settings.model_config.model_4p')}>
                 <Select
                   value={settings.model_config.model_4p}
@@ -120,12 +120,12 @@ export function ModelConfigSection({ settings, updateSetting }: ModelConfigSecti
                   </SelectContent>
                 </Select>
               </SettingsItem>
-            </div>
+            </>
           )}
         </div>
 
         {/* Right Column: Shared Model Parameters */}
-        <div className='space-y-6'>
+        <div className='space-y-4'>
           <SettingsItem
             label={t('settings.model_config.temperature')}
             description={t('settings.model_config.temperature_desc')}

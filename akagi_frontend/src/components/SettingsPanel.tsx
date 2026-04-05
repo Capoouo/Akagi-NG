@@ -85,26 +85,28 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
             </div>
           )}
         >
-          <div className='space-y-8'>
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <GeneralSection
-                settings={settings}
-                updateSetting={updateSetting}
-                updateSettingsBatch={updateSettingsBatch}
-              />
-              <ConnectionSection settings={settings} updateSetting={updateSetting} />
+          <div className='grid grid-cols-2 gap-x-6 gap-y-8'>
+            <GeneralSection
+              settings={settings}
+              updateSetting={updateSetting}
+              updateSettingsBatch={updateSettingsBatch}
+            />
+            <ConnectionSection settings={settings} updateSetting={updateSetting} />
+
+            <div className='col-span-2'>
+              <ServiceSection settings={settings} updateSetting={updateSetting} />
             </div>
 
-            <ServiceSection settings={settings} updateSetting={updateSetting} />
+            <div className='col-span-2'>
+              <ModelConfigSection settings={settings} updateSetting={updateSetting} />
+            </div>
 
-            <ModelConfigSection settings={settings} updateSetting={updateSetting} />
-
-            <div className='flex justify-end border-t border-white/5 pt-6'>
+            <div className='col-span-2 flex justify-end border-t border-white/5 pt-6'>
               <Button
                 variant='destructive'
                 size='sm'
                 onClick={() => setIsRestoreDialogOpen(true)}
-                className='w-full sm:w-auto'
+                className='w-auto'
               >
                 <RotateCcw className='mr-2 h-4 w-4' />
                 {t('settings.restore')}

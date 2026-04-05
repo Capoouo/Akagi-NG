@@ -18,7 +18,7 @@ export function ServiceSection({ settings, updateSetting }: ServiceSectionProps)
   return (
     <div className='space-y-4'>
       <h3 className='settings-section-title'>{t('settings.server.title')}</h3>
-      <div className='grid grid-cols-2 gap-4'>
+      <div className='grid grid-cols-2 gap-6'>
         <SettingsItem label={t('settings.server.host')}>
           <Input
             value={settings.server.host}
