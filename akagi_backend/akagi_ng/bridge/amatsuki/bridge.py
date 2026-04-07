@@ -39,35 +39,41 @@ class STOMP:
         self._cached_dict: dict | None = None
 
     def parse(self, content: bytes) -> Self:
-        # 将字节转换为字符串
-        content_str = content.decode("utf-8")
-        # 按换行符分割
-        content_lines = content_str.split("\n")
-        # 解析帧
-        self.frame = STOMPFrame(content_lines[0])
-        # 解析头
-        headers = content_lines[1:-1]
-        for header in headers:
-            key, sep, value = header.partition(":")
-            if not sep:
-                continue
-            match key:
-                case "destination":
-                    self.destination = value
-                case "content-length":
-                    self.content_length = int(value)
-                case "content-type":
-                    self.content_type = value
-                case "subscription":
-                    self.subscription = value
-                case "message-id":
-                    self.message_id = value
+        # 统一去除末尾 NULL 字节并解码
+        content_str = content.decode("utf-8").rstrip("\x00")
 
-        # 解析内容
-        self.content = content_lines[-1] if content_lines else ""
-        # 如果末尾是空字符则去除
-        if self.content.endswith("\x00"):
-            self.content = self.content[:-1]
+        # 处理心跳包
+        if content_str in ("\n", "\r\n"):
+            self.frame = None
+            return self
+
+        # 使用 partition 一次性拆分 Header 和 Body
+        header_part, _, self.content = content_str.partition("\n\n")
+        lines = header_part.splitlines()
+        if not lines:
+            return self
+
+        # 解析帧命令
+        self.frame = STOMPFrame(lines[0].strip())
+
+        # 头部映射表
+        header_map = {
+            "destination": "destination",
+            "content-length": "content_length",
+            "content-type": "content_type",
+            "subscription": "subscription",
+            "message-id": "message_id",
+        }
+
+        for line in lines[1:]:
+            if ":" not in line:
+                continue
+            k, v = map(str.strip, line.split(":", 1))
+            if attr := header_map.get(k):
+                # 特殊处理数字类型，其余直接赋值
+                val = int(v) if attr == "content_length" and v.isdigit() else v
+                setattr(self, attr, val)
+
         self._cached_dict = None
         return self
 
@@ -81,7 +87,8 @@ class STOMP:
             self._cached_dict = json.loads(self.content)
             return self._cached_dict
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON: {self.content}")
+            logger.warning(f"Failed to parse JSON: {self.content}")
+            return None
 
 
 class AmatsukiBridge(BaseBridge):
@@ -182,9 +189,7 @@ class AmatsukiBridge(BaseBridge):
         try:
             stomp = STOMP().parse(content)
             if stomp.frame == STOMPFrame.MESSAGE:
-                logger.debug(f"Destination: {stomp.destination}")
-                logger.trace(f"<- {stomp.content_dict()}")
-
+                logger.trace(f"<- {stomp.destination}: {stomp.content}")
                 parsed = []
                 if handler := self.handlers.get(stomp.destination):
                     parsed = handler(stomp)
@@ -198,9 +203,6 @@ class AmatsukiBridge(BaseBridge):
                     logger.trace(f"-> {parsed}")
                 return parsed
             return []
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to decode Amatsuki JSON: {e}")
-            return [self.make_system_event(NotificationCode.JSON_DECODE_ERROR)]
         except Exception as e:
             logger.error(f"Failed to parse STOMP message: {e}")
             return [self.make_system_event(NotificationCode.PARSE_ERROR)]
@@ -251,11 +253,23 @@ class AmatsukiBridge(BaseBridge):
 
     def _validate_round_start(self, stomp: STOMP) -> dict | None:
         content_dict = stomp.content_dict()
-        if not self.valid_flow or content_dict is None:
+        if content_dict is None:
             return None
+
+        # 检查是否包含必要的对局字段
         if not {"bakaze", "honba", "oya", "playerPoints", "playerTiles"}.issubset(content_dict):
             logger.error(f"Invalid content: {stomp.content}")
             return None
+
+        # 自动激活 valid_flow ，解决跨连接丢失状态的问题
+        if not self.valid_flow:
+            self.valid_flow = True
+            logger.debug("Amatsuki flow auto-activated via roundStart")
+
+        # 根据玩家数量自动识别三麻/四麻
+        num_players = len(content_dict["playerTiles"])
+        self.is_3p = num_players == MahjongConstants.SEATS_3P
+
         return content_dict
 
     def _handle_round_start(self, stomp: STOMP) -> list[MJAIEvent]:
