@@ -7,12 +7,7 @@ export function ExitOverlay() {
     <div className='animate-in fade-in fixed inset-0 z-9999 flex flex-col items-center justify-center bg-white/30 backdrop-blur-xl duration-500 dark:bg-zinc-950/30'>
       <div className='relative mb-8'>
         <div className='logo-glow-effect' />
-        <img
-          src='torii.svg'
-          alt='Akagi Logo'
-          draggable={false}
-          className='relative h-32 w-32 drop-shadow-lg'
-        />
+        <img src='torii.svg' alt='Akagi Logo' className='relative h-32 w-32 drop-shadow-lg' />
       </div>
       <h1 className='mb-4 text-4xl font-bold tracking-tight text-rose-500'>
         {t('app.stopped_title')}

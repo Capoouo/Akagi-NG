@@ -9,7 +9,6 @@ function ExternalLink({ href, icon, text }: { href: string; icon: ReactNode; tex
   return (
     <a
       href={href}
-      draggable={false}
       onClick={(e) => {
         e.preventDefault();
         window.electron.invoke('open-external', href);

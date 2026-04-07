@@ -34,12 +34,7 @@ export const MahjongTile = memo(function MahjongTile({
             <div className='absolute inset-0 bg-linear-to-tr from-transparent via-white/20 to-transparent opacity-30 dark:opacity-20' />
           </div>
         ) : (
-          <img
-            src={svgPath}
-            alt={tile}
-            draggable={false}
-            className='h-full w-full object-contain p-px select-none'
-          />
+          <img src={svgPath} alt={tile} className='h-full w-full object-contain p-px select-none' />
         )}
       </div>
       {/* Pseudo-3D Thickness */}
