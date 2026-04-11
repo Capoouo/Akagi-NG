@@ -2,18 +2,27 @@ import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalDescription,
-  ModalHeader,
-  ModalTitle,
-} from '@/components/ui/modal';
-import { StatusBar } from '@/components/ui/status-bar';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { Separator } from '@/components/ui/separator';
 import { useSettings } from '@/hooks/useSettings';
 
 import { ConnectionSection } from './settings/ConnectionSection';
@@ -50,81 +59,96 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
   if (!settings) return null;
 
   return (
-    <Modal open={open} onOpenChange={onClose} className='max-h-[90vh] max-w-4xl'>
-      <ModalClose onClick={onClose} />
-      <ModalHeader>
-        <ModalTitle>{t('app.settings_title')}</ModalTitle>
-        <ModalDescription>{t('app.settings_desc')}</ModalDescription>
-        {restartRequired && (
-          <StatusBar variant='warning' className='mt-4 items-center justify-center text-center'>
-            {t('settings.restart_required')}
-          </StatusBar>
-        )}
-        {isRestored && (
-          <StatusBar variant='info' className='mt-4 items-center justify-center text-center'>
-            {t('settings.restored_success')}
-          </StatusBar>
-        )}
-      </ModalHeader>
-
-      <ModalContent>
-        <ErrorBoundary
-          fallback={(error: Error) => (
-            <div className='flex flex-col items-center justify-center p-8 text-center'>
-              <AlertTriangle className='text-destructive mb-4 h-10 w-10' />
-              <h3 className='text-destructive mb-2 text-lg font-semibold'>
-                {t('common.connection_failed')}
-              </h3>
-              <p className='text-muted-foreground mb-4 max-w-xs text-sm whitespace-pre-wrap'>
-                {t('settings.load_error_desc')}
-                {'\n'}
-                {error.message || String(error)}
-              </p>
-
-              <Button onClick={onClose}>{t('common.close')}</Button>
-            </div>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className='flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-4xl'>
+        <DialogHeader className='border-border border-b p-6 pb-4'>
+          <DialogTitle>{t('app.settings_title')}</DialogTitle>
+          <DialogDescription>{t('app.settings_desc')}</DialogDescription>
+          {restartRequired && (
+            <Alert variant='warning' className='mt-4 flex items-center justify-center p-2'>
+              <AlertDescription>{t('settings.restart_required')}</AlertDescription>
+            </Alert>
           )}
-        >
-          <div className='grid grid-cols-2 gap-x-6 gap-y-8'>
-            <GeneralSection
-              settings={settings}
-              updateSetting={updateSetting}
-              updateSettingsBatch={updateSettingsBatch}
-            />
-            <ConnectionSection settings={settings} updateSetting={updateSetting} />
+          {isRestored && (
+            <Alert variant='success' className='mt-4 flex items-center justify-center p-2'>
+              <AlertDescription>{t('settings.restored_success')}</AlertDescription>
+            </Alert>
+          )}
+        </DialogHeader>
 
-            <div className='col-span-2'>
-              <ServiceSection settings={settings} updateSetting={updateSetting} />
+        <div className='flex-1 overflow-y-auto p-6'>
+          <ErrorBoundary
+            fallback={(error: Error) => (
+              <div className='flex flex-col items-center justify-center p-8 text-center'>
+                <AlertTriangle className='text-destructive mb-4 h-10 w-10' />
+                <h3 className='text-destructive mb-2 text-lg font-semibold'>
+                  {t('common.connection_failed')}
+                </h3>
+                <p className='text-muted-foreground mb-4 max-w-xs text-sm whitespace-pre-wrap'>
+                  {t('settings.load_error_desc')}
+                  {'\n'}
+                  {error.message || String(error)}
+                </p>
+
+                <Button onClick={onClose}>{t('common.close')}</Button>
+              </div>
+            )}
+          >
+            <div className='grid grid-cols-2 gap-x-6 gap-y-8'>
+              <GeneralSection
+                settings={settings}
+                updateSetting={updateSetting}
+                updateSettingsBatch={updateSettingsBatch}
+              />
+              <ConnectionSection settings={settings} updateSetting={updateSetting} />
+
+              <div className='col-span-2'>
+                <ServiceSection settings={settings} updateSetting={updateSetting} />
+              </div>
+
+              <div className='col-span-2'>
+                <ModelConfigSection settings={settings} updateSetting={updateSetting} />
+              </div>
+
+              <div className='col-span-2 flex flex-col pt-2'>
+                <Separator className='my-6' />
+                <div className='flex justify-end'>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={() => setIsRestoreDialogOpen(true)}
+                    className='w-auto'
+                  >
+                    <RotateCcw className='mr-2 h-4 w-4' />
+                    {t('settings.restore')}
+                  </Button>
+                </div>
+              </div>
             </div>
+          </ErrorBoundary>
+        </div>
 
-            <div className='col-span-2'>
-              <ModelConfigSection settings={settings} updateSetting={updateSetting} />
-            </div>
-
-            <div className='col-span-2 flex justify-end border-t border-white/5 pt-6'>
-              <Button
+        <AlertDialog open={isRestoreDialogOpen} onOpenChange={setIsRestoreDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('settings.restore_confirm_title')}</AlertDialogTitle>
+              <AlertDialogDescription>{t('settings.restore_confirm_desc')}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+              <AlertDialogAction
                 variant='destructive'
-                size='sm'
-                onClick={() => setIsRestoreDialogOpen(true)}
-                className='w-auto'
+                onClick={() => {
+                  restoreDefaults();
+                  setIsRestoreDialogOpen(false);
+                }}
               >
-                <RotateCcw className='mr-2 h-4 w-4' />
                 {t('settings.restore')}
-              </Button>
-            </div>
-          </div>
-        </ErrorBoundary>
-
-        <ConfirmationDialog
-          open={isRestoreDialogOpen}
-          onOpenChange={setIsRestoreDialogOpen}
-          title={t('settings.restore_confirm_title')}
-          description={t('settings.restore_confirm_desc')}
-          onConfirm={restoreDefaults}
-          variant='destructive'
-          confirmText={t('settings.restore')}
-        />
-      </ModalContent>
-    </Modal>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }

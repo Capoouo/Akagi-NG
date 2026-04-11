@@ -1,9 +1,10 @@
+import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CapsuleSwitch } from '@/components/ui/capsule-switch';
 import { Input } from '@/components/ui/input';
 import { SettingsItem } from '@/components/ui/settings-item';
-import { StatusBar } from '@/components/ui/status-bar';
 import type { Paths, PathValue, Settings } from '@/types';
 
 interface ConnectionSectionProps {
@@ -50,7 +51,12 @@ export function ConnectionSection({ settings, updateSetting }: ConnectionSection
             </SettingsItem>
           )}
           {['riichi_city', 'amatsuki'].includes(settings.platform) && (
-            <StatusBar variant='info'>{t('settings.connection.mitm_required_notice')}</StatusBar>
+            <Alert variant='info'>
+              <Info className='h-4 w-4' />
+              <AlertDescription className='text-sm'>
+                {t('settings.connection.mitm_required_notice')}
+              </AlertDescription>
+            </Alert>
           )}
         </>
       )}

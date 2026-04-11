@@ -7,7 +7,16 @@ import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import SettingsPanel from '@/components/SettingsPanel';
 import StreamPlayer from '@/components/StreamPlayer';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { APP_SPLASH_DURATION_MS, TOAST_DURATION_DEFAULT } from '@/config/constants';
 import { GameContext } from '@/contexts/GameContext';
 import { fetchSettingsApi, useSettings } from '@/hooks/useSettings';
@@ -169,16 +178,26 @@ function Dashboard({ settingsPromise }: DashboardProps) {
 
       <SettingsPanel open={settingsOpen} onClose={handleCloseSettings} />
 
-      <ConfirmationDialog
-        open={showShutdownConfirm}
-        onOpenChange={setShowShutdownConfirm}
-        title={t('app.shutdown_confirm_title')}
-        description={t('app.shutdown_confirm_desc')}
-        onConfirm={performShutdown}
-        variant='destructive'
-        confirmText={t('common.confirm')}
-        cancelText={t('common.cancel')}
-      />
+      <AlertDialog open={showShutdownConfirm} onOpenChange={setShowShutdownConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('app.shutdown_confirm_title')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('app.shutdown_confirm_desc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              variant='destructive'
+              onClick={() => {
+                performShutdown();
+                setShowShutdownConfirm(false);
+              }}
+            >
+              {t('common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ToastContainer
         autoClose={TOAST_DURATION_DEFAULT}
         position='top-right'

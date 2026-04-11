@@ -1,5 +1,5 @@
-import { Slot } from '@radix-ui/react-slot';
 import { type VariantProps } from 'class-variance-authority';
+import { Slot as SlotPrimitive } from 'radix-ui';
 import { type ComponentProps } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -11,9 +11,15 @@ export interface ButtonProps extends ComponentProps<'button'>, VariantProps<type
 }
 
 const Button = ({ className, variant, size, asChild = false, ref, ...props }: ButtonProps) => {
-  const Comp = asChild ? Slot : 'button';
-  return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  const Comp = asChild ? SlotPrimitive.Slot : 'button';
+  return (
+    <Comp
+      data-slot='button'
+      className={cn(buttonVariants({ variant, size, className }))}
+      ref={ref}
+      {...props}
+    />
+  );
 };
-Button.displayName = 'Button';
 
 export { Button };

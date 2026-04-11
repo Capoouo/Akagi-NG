@@ -1,6 +1,8 @@
 import { ArrowDownToLine } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 
+import { Badge } from '@/components/ui/badge';
+
 type StoreSnapshot = { version: string };
 
 let snapshot: StoreSnapshot = { version: '' };
@@ -37,12 +39,16 @@ export function UpdateBadge() {
   };
 
   return (
-    <button
+    <Badge
+      variant='destructive'
+      asChild
+      className='-my-0.5 cursor-pointer gap-1.5 bg-rose-500/10 px-2 py-0.5 text-rose-600 hover:bg-rose-500/20 dark:bg-rose-500/20 dark:text-rose-400'
       onClick={handleClick}
-      className='-my-0.5 flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-rose-600 transition-colors hover:bg-rose-500/20 dark:text-rose-400'
     >
-      <ArrowDownToLine className='h-3 w-3 shrink-0' />
-      <span className='w-[5ch] text-center tabular-nums'>v{version}</span>
-    </button>
+      <button>
+        <ArrowDownToLine className='h-3 w-3 shrink-0' />
+        <span className='w-[5ch] text-center tabular-nums'>v{version}</span>
+      </button>
+    </Badge>
   );
 }

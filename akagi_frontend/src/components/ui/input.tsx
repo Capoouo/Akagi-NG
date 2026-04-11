@@ -8,6 +8,7 @@ const Input = ({ className, type, ref, ...props }: InputProps) => {
   return (
     <input
       type={type}
+      data-slot='input'
       spellCheck={false}
       autoComplete='off'
       className={cn(
@@ -19,6 +20,5 @@ const Input = ({ className, type, ref, ...props }: InputProps) => {
     />
   );
 };
-Input.displayName = 'Input';
 
 export { Input };
