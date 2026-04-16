@@ -3,18 +3,21 @@ import json
 import random
 from collections.abc import Iterator
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import TypedDict
 
 import requests
 
 from akagi_ng.bridge.logger import logger
+from akagi_ng.bridge.majsoul.catalog_proto import config_pb2, sheets_pb2
 from akagi_ng.bridge.majsoul.liqi import LiqiProto, MsgType
-from akagi_ng.bridge.majsoul.mod_proto import config_pb2, sheets_pb2
 from akagi_ng.core.paths import ensure_dir, get_settings_dir
 
-MOD_DIR = ensure_dir(get_settings_dir() / "majsoul_mod")
-MOD_SETTINGS_PATH = MOD_DIR / "settings.json"
-RESOURCE_PATH = MOD_DIR / "lqc.lqbin"
+CONFIG_DIR = ensure_dir(get_settings_dir())
+MOD_RESOURCE_DIR = ensure_dir(CONFIG_DIR / "majsoul_mod")
+LEGACY_MOD_SETTINGS_PATH = MOD_RESOURCE_DIR / "settings.json"
+MOD_SETTINGS_PATH = CONFIG_DIR / "settings.mod.json"
+RESOURCE_PATH = MOD_RESOURCE_DIR / "lqc.lqbin"
 DEFAULT_CHARACTER_ID = 200001
 DEFAULT_SKIN_ID = 400101
 ANNOUNCEMENT_ID = 666666
@@ -210,20 +213,32 @@ def iter_dict_items(value: object) -> Iterator[JsonDict]:
             yield item_dict
 
 
+def _resolve_mod_settings_source_path() -> Path | None:
+    if MOD_SETTINGS_PATH.exists():
+        return MOD_SETTINGS_PATH
+    if LEGACY_MOD_SETTINGS_PATH.exists():
+        return LEGACY_MOD_SETTINGS_PATH
+    return None
+
+
 def load_mod_settings_dict() -> ModSettings:
     defaults = get_default_mod_settings_dict()
-    if MOD_SETTINGS_PATH.exists():
+    source_path = _resolve_mod_settings_source_path()
+    if source_path is not None:
         try:
-            loaded = json.loads(MOD_SETTINGS_PATH.read_text(encoding="utf-8"))
+            loaded = json.loads(source_path.read_text(encoding="utf-8"))
             loaded_dict = value_to_dict(loaded)
             if loaded_dict is not None:
                 _deep_merge(defaults, loaded_dict)
+                if source_path == LEGACY_MOD_SETTINGS_PATH and not MOD_SETTINGS_PATH.exists():
+                    save_mod_settings_dict(defaults)
         except Exception as exc:
-            logger.warning(f"[MajsoulMod] Failed to load settings.json: {exc}")
+            logger.warning(f"[MajsoulMod] Failed to load {source_path.name}: {exc}")
     return defaults
 
 
 def save_mod_settings_dict(settings: ModSettings) -> None:
+    ensure_dir(MOD_SETTINGS_PATH.parent)
     MOD_SETTINGS_PATH.write_text(
         json.dumps(settings, indent=2, ensure_ascii=False),
         encoding="utf-8",

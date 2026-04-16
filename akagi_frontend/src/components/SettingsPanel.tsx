@@ -92,8 +92,6 @@ export default function SettingsPanel({ open, onClose }: SettingsPanelProps) {
                 </p>
 
                 <Button onClick={onClose}>{t('common.close')}</Button>
-              </div>
-            )}
           >
             <div className='grid grid-cols-2 gap-x-6 gap-y-8'>
               <GeneralSection

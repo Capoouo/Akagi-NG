@@ -88,8 +88,6 @@ where = ["."]
 include = ["akagi_ng*"]
 exclude = ["frontend*", "logs*", "playwright_data*", ".venv*"]
 
-[tool.setuptools.package-data]
-"akagi_ng" = ["bridge/majsoul/mod_proto/*.desc"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

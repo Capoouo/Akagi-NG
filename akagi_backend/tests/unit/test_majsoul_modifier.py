@@ -1,12 +1,14 @@
+import json
 from unittest.mock import MagicMock, patch
 
+from akagi_ng.bridge.majsoul.catalog_proto import config_pb2, sheets_pb2
 from akagi_ng.bridge.majsoul.liqi import MsgType, from_protobuf, to_protobuf
-from akagi_ng.bridge.majsoul.mod_proto import config_pb2, sheets_pb2
 from akagi_ng.bridge.majsoul.modifier import (
     DEFAULT_CHARACTER_ID,
     MajsoulModifier,
     ModCatalog,
     get_default_mod_settings_dict,
+    load_mod_settings_dict,
     value_to_dict,
     value_to_list,
     verify_mod_settings_dict,
@@ -1094,6 +1096,50 @@ def test_modifier_helper_functions_and_validation():
     assert verify_mod_settings_dict({"enabled": "yes"}) is False
     assert verify_mod_settings_dict({"config": []}) is False
     assert verify_mod_settings_dict({"resource": []}) is False
+
+
+def test_load_mod_settings_dict_migrates_legacy_settings_file():
+    legacy_path = MagicMock()
+    legacy_path.exists.return_value = True
+    legacy_path.name = "settings.json"
+    legacy_path.read_text.return_value = json.dumps({"enabled": False, "config": {"nickname": "Legacy"}})
+
+    new_path = MagicMock()
+    new_path.exists.return_value = False
+
+    with (
+        patch("akagi_ng.bridge.majsoul.modifier.LEGACY_MOD_SETTINGS_PATH", legacy_path),
+        patch("akagi_ng.bridge.majsoul.modifier.MOD_SETTINGS_PATH", new_path),
+        patch("akagi_ng.bridge.majsoul.modifier.save_mod_settings_dict") as mock_save,
+    ):
+        settings = load_mod_settings_dict()
+
+    assert settings["enabled"] is False
+    assert settings["config"]["nickname"] == "Legacy"
+    mock_save.assert_called_once_with(settings)
+
+
+def test_load_mod_settings_dict_prefers_new_settings_file():
+    legacy_path = MagicMock()
+    legacy_path.exists.return_value = True
+    legacy_path.name = "settings.json"
+    legacy_path.read_text.return_value = json.dumps({"enabled": False, "config": {"nickname": "Legacy"}})
+
+    new_path = MagicMock()
+    new_path.exists.return_value = True
+    new_path.name = "settings.mod.json"
+    new_path.read_text.return_value = json.dumps({"enabled": True, "config": {"nickname": "Current"}})
+
+    with (
+        patch("akagi_ng.bridge.majsoul.modifier.LEGACY_MOD_SETTINGS_PATH", legacy_path),
+        patch("akagi_ng.bridge.majsoul.modifier.MOD_SETTINGS_PATH", new_path),
+        patch("akagi_ng.bridge.majsoul.modifier.save_mod_settings_dict") as mock_save,
+    ):
+        settings = load_mod_settings_dict()
+
+    assert settings["enabled"] is True
+    assert settings["config"]["nickname"] == "Current"
+    mock_save.assert_not_called()
 
 
 def test_modifier_process_guard_paths():
